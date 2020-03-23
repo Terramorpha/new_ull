@@ -43,37 +43,6 @@ const post = {
 	text: document.getElementById("post_text") as HTMLTextAreaElement,
 };
 
-class ReferenceMap {
-	map: Map<string, RefenrencedMessage>;
-	add(to: string, from: string) {
-		if (!this.map[to]) this.map[to] = [];
-		if (this.map[to].every((v) => v != from))
-			(this.map[to] as string[]).push(from);
-
-	}
-	get(to: string): RefenrencedMessage {
-		const o = this.map[to];
-		if (o) return o;
-		this.map[to] = new RefenrencedMessage();
-		return this.map[to];
-	}
-	toTree(): Map<string, string[]> {
-		const o = new Map();
-		for (const to in this.map) {
-			if (!(this.map[to] as RefenrencedMessage).element) continue;
-			o[to] = [];
-		}
-		for (const to in this.map) {
-			(this.map[to].references as string[]).forEach(from => {
-				o[from].push(to);
-			})
-		}
-		return o;
-	}
-	constructor() {
-		this.map = new Map();
-	}
-}
 
 function newCID(link: Link): Ipfs.CID {
 	return new Ipfs.CID(link.version, link.codec, new Buffer(link.multihash));
@@ -119,7 +88,7 @@ async function getListNodeFromHash(ipfsnode: IpfsNode, hash: Ipfs.CID): Promise<
 	return new ListNode(value.value.next, value.value.items);
 }
 
-function filterItems(items: Ull.Item[]): Ull.Item[] {
+function filterItems(items: Ull.Item[], view: MessageView): Ull.Item[] {
 	let o: Ull.Item[] = [];
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i];
@@ -150,7 +119,7 @@ function filterItems(items: Ull.Item[]): Ull.Item[] {
 		}
 		if (item.type === Ull.LinkItem.type_name) {
 			//console.log("data", item);
-			const val = msgReferences.map[item.data];
+			const val = view.msgReferences.map[item.data];
 			//console.log(val);
 			if (!val) {
 				if (!confirm("link " + item.data + " is foreign or invalid. Continue ?"))
@@ -162,15 +131,6 @@ function filterItems(items: Ull.Item[]): Ull.Item[] {
 	return o;
 }
 
-function newRepliesLink(toHash: string): HTMLElement {
-	const elem = document.createElement("a");
-	elem.href = "javascript:void(0)";
-	handleMouseOver(elem, toHash);
-	elem.addEventListener("click", scrollIntoView(toHash));
-	elem.classList.add("pointed_by");
-	elem.innerText = shortHash(toHash);
-	return elem;
-}
 
 function createBase64Uri(ar: ArrayBuffer): string {
 	const b64 = base64ArrayBuffer(ar);
@@ -187,95 +147,6 @@ function addMetadata(items: Ull.Item[]): Ull.Item[] {
 	return items;
 }
 
-/**
- * create an image element which will, after the content is retrieved, display the linked image
- * @param hash the hash to the video file
- * @param ipfsNode the node
- */
-function newIpfsImage(hash: string, ipfsNode: any): HTMLImageElement {
-	const img = document.createElement("img");
-	img.classList.add("message_image");
-	ipfsNode.cat(hash).then((u8array: Uint8Array) => {
-		const blob = new Blob([u8array.buffer]);
-		const uri = URL.createObjectURL(blob)
-		img.src = uri;
-	});
-	img.alt = "[Image]";
-	return img;
-}
-
-/**
- * create an audio element which will, after the content is retrieved, display the linked image
- * @param hash the hash to the video file
- * @param ipfsNode the node
- */
-function newIpfsAudio(hash: string, ipfsNode: any): HTMLAudioElement {
-	const au = document.createElement("audio") as HTMLAudioElement;
-	au.setAttribute("controls", "");
-	ipfsNode.cat(hash).then((u8array: Uint8Array) => {
-		const blob = new Blob([u8array.buffer]);
-		const uri = URL.createObjectURL(blob)
-		au.src = uri;
-	});
-	return au;
-}
-
-/**
- * Doesn't work
- * @param hash the hash to the video file
- * @param ipfsNode the node to use to get the file
- */
-function newIpfsVideo(hash: string, ipfsNode: any): HTMLVideoElement {
-	const vid: HTMLVideoElement = document.createElement("video");
-	vid.controls = true;
-	//const stream: Plugin = ipfsNode.files.catPullStream(hash);
-	//console.log("stream:", stream);
-	//const media_stream = new MediaStream(stream);
-	//console.log("media_stream:", media_stream);
-	//vid.srcObject = media_stream;
-
-	vid.src = "https://ipfs.io/ipfs/" + hash;
-
-	/* ipfsNode.cat(hash).then((u8array: Uint8Array) => {
-		const blob = new Blob([u8array.buffer])
-		vid.src = URL.createObjectURL(blob);
-	}); */
-
-	return vid;
-}
-class RefenrencedMessage {
-	element: HTMLDivElement | null;
-	references: Array<string>;
-	constructor() {
-		this.element = null;
-		this.references = new Array();
-	}
-
-	addRef(ref: string) {
-
-		if (!contains(this.references, ref)) {
-			this.references.push(ref);
-		}
-		this.updateRendering();
-	}
-
-	updateRendering() {
-		if (this.element) {
-			const elems = [];
-			this.references.forEach(ref => {
-				elems.push(newRepliesLink(ref));
-			});
-			this.element.innerText = "";
-			elems.forEach((v) => this.element.appendChild(v));
-		}
-	}
-
-	setElement(elem: HTMLDivElement) {
-		elem.classList.add("pointers_container");
-		this.element = elem;
-		this.updateRendering();
-	}
-}
 
 //hashes of all visited messages. useful to verify when to stop traversing the ll (refresh on post)
 const hashes: string[] = [];
@@ -295,68 +166,6 @@ function sleep(ms: number) {
 }
 
 
-/**
- * a is the element to set the handlers on
- * hash is the element's id/hash to display when the a element is hovered
- */
-function handleMouseOver(a: HTMLElement, hash: string) {
-	let elem: HTMLElement | null;
-	a.addEventListener('mouseover', () => {
-		const e = document.getElementById(hash);
-		if (e) {
-			const big = document.createElement("div");
-			elem = e!.cloneNode(true) as HTMLElement;
-			elem.classList.add("message_preview");
-			big.classList.add("message_preview_background");
-			big.style.position = "fixed"
-			big.appendChild(elem);
-
-			document.body.appendChild(big);
-			const rect: any = a.getBoundingClientRect();
-			//console.log("rect:", elem.getBoundingClientRect());
-			big.style.left = rect.right.toString() + "px";
-			big.style.top = (rect.top - elem.getBoundingClientRect().height / 2).toString() + "px";
-			//elem = createDiv(hash, rect.right, rect.top);
-			//elem.style.backgroundColor = "#FFFFFF";
-			return;
-		}
-		console.log("didn't find node to display");
-
-	});
-
-	a.addEventListener('mouseout', () => {
-		if (elem)
-			elem.remove();
-	});
-}
-
-/** 
- * this is a higher order function: it returns a function that,
- * when called, wil scroll to the specified hash and highlight
- * it for a second
- */
-function scrollIntoView(hash) {
-	return () => {
-		const e = document.getElementById(hash)!;
-		if (e) {
-			e.scrollIntoView(true);
-			e.classList.add("selected");
-			sleep(1000).then(() => {
-				e.classList.remove("selected");
-			});
-		} else {
-			//console.log("hash not in this thread");
-			//console.log("hash:", hash);
-			//custom.openHashInWindow(hash);
-			//alert("todo");
-			const u = new URL(window.location.href);
-			u.search = "";
-			u.searchParams.set("hash", hash);
-			window.open(u.href, "_blank");
-			//alert("not in this thread: foreign");
-		}
-	};
-}
 
 function itemToTag(item: Ull.Item, node: any): HTMLElement {
 	if (item.type === Ull.TextItem.type_name) {
@@ -470,54 +279,6 @@ function itemToTag(item: Ull.Item, node: any): HTMLElement {
 	}
 }
 
-function shortHash(hash: string): string {
-	return hash.slice(7, 13)
-}
-
-function newMessageBox(name: string, references: HTMLDivElement): HTMLElement {
-	const message = document.createElement("div");
-	message.id = name;
-	message.className = "message";
-
-	const header = document.createElement("div");
-	header.classList.add("message_header");
-
-	const short_name = shortHash(name);
-
-	const id: HTMLAnchorElement = document.createElement("a");
-	id.innerText = short_name;
-	id.classList.add("post_id");
-	id.href = "javascript:void(0)";
-	//set the callback for the id copying
-	id.addEventListener('click', async () => {
-		if (IS_READONLY) {
-			//post.text.value = name;
-			//post.text.select();
-			//const result = document.execCommand("copy");
-			//console.log("clipboard:", result);
-			//console.log("val:", name);
-			await navigator.clipboard.writeText(name);
-		} else {
-			post.text.value += ">>" + name + "\n";
-		}
-	});
-	header.appendChild(id);
-	header.appendChild(references);
-	message.appendChild(header);
-	message.appendChild(document.createElement("br"));
-	//const refs = msgReferences.get(name);
-	//refs.forEach((v) => {
-	//    const l: HTMLAnchorElement = document.createElement("a");
-	//    l.href = "javascript:void";
-	//    l.innerText = ">>" + shortHash(v);
-	//    l.classList.add("pointed_by");
-	//    l.addEventListener("click", scrollIntoView(v));
-	//    handleMouseOver(l, v);
-	//    message.appendChild(l);
-	//})
-	//message.appendChild(document.createElement("br"));
-	return message;
-}
 
 async function getIpfsNode(): Promise<IpfsNode> {
 	const win = (window as any);
@@ -537,9 +298,6 @@ async function getIpfsNode(): Promise<IpfsNode> {
 }
 
 (async () => {
-
-
-
 	const win = window;
 	const ipfs = await getIpfsNode();
 	(window as any).ipfsnode = ipfs;
@@ -605,13 +363,14 @@ async function getIpfsNode(): Promise<IpfsNode> {
 	const l = win.location;
 	const url = l.protocol + "//" + l.host + "/thread";//custom.url;
 	let remotePeerAddress;
-
-
 	const post_container = document.getElementById("post_container");
 	const hash = null;//custom.hash;
 	let topHash: Ipfs.CID;
+	let allTheHashes: Ipfs.CID[] = [];
 	const params = new URLSearchParams(window.location.search);
 	const reqHash = params.get("hash");
+	const messageView: MessageView = new MessageView();
+	
 	if (reqHash) {
 		if (post_container) {
 			post_container.hidden = true;
@@ -622,11 +381,13 @@ async function getIpfsNode(): Promise<IpfsNode> {
 		//console.log("bout to get topHash from http");
 		//console.log("url:", url);
 		const resp = await (await fetch(url)).json();
-		const allTheHashes: string[] = resp.other_hashes;
-		allTheHashes.unshift(resp.hash);
-		console.log("allTheHashes:::::", allTheHashes);
+		const other_hashes: string[] = resp.other_hashes;
+		const resp_hash: string|null = resp.hash;
+		allTheHashes = other_hashes.map((hash)=>newCIDFromString(hash));
+		if (resp_hash)
+			allTheHashes.unshift(resp.hash);
+		//console.log("allTheHashes:::::", allTheHashes);
 		//console.log("response:::::", resp);		
-		topHash = resp.hash;
 		try {
 			//console.log("resp:", resp)
 			remotePeerAddress = resp.address;
@@ -655,91 +416,36 @@ async function getIpfsNode(): Promise<IpfsNode> {
 
 
 	post.send.addEventListener("click", async () => {
-		let messages: Ull.Item[] = filterItems(Ull.extract(post.text.value));
-		//console.log(typeof messages);
-		//console.log(messages);
-		// failed or no item
+		let messages: Ull.Item[] = filterItems(Ull.extract(post.text.value), messageView);
 		if (messages.length === 0) return;
 		messages = addMetadata(messages);
-		
-
-
-		//console.log("items", items);
-		//console.log("items.length", items.length);
-		//console.log("items", messages);
 		const body = JSON.stringify(messages, (k, v) => v);
-		//console.log("body:", body);
-		//console.log("url:", url);
 		const resp = await fetch(url, {
 			method: "POST",
 			body: body
 		});
 		if (resp.status == 400) {
-			//bad request
 			const message = (await resp.json()).error;
-			//console.log("couldn't post:", message);
 			alert(message);
 			return;
 		}
 		post.text.value = "";
 		const jsonResp: any = await resp.json();
-
-		//console.log(jsonResp);
-
-		
-		
 		const nodes: Array<HTMLElement> = [];
-		//console.log("resp:", resp);
-		//console.log("setting new topHash");
-		let topHash: Ipfs.CID | null = newCIDFromString(jsonResp.hash);
-		//console.log("remotePeerAddress");
-
+		let topHash: Ipfs.CID = newCIDFromString(jsonResp.hash);
 		try {
-			await ipfs.swarm.connect(remotePeerAddress);
-		} catch (err) { }
-		while (topHash && !contains(hashes, topHash.toString())) {
-			//console.log("topHash:", topHash);
-			const val = await getListNodeFromHash(ipfs, topHash);
-			//console.log("list:", val );
-			const references = document.createElement("div");
-			msgReferences.get(topHash.toString()).setElement(references);
-			const elem = newMessageBox(topHash.toString(), references);
-
-			const bigNode = document.createElement("div");
-			bigNode.classList.add("big_node");
-			bigNode.appendChild(elem);
-			bigNode.appendChild(document.createElement("br"));
-			nodes.push(bigNode);
-			const h = topHash;
-			val.getItems(ipfs).then((items) => {
-				items.forEach(item => {
-					if (item.type === Ull.LinkItem.type_name) {
-						const ref = msgReferences.get(item.data);
-						ref.addRef(h.toString());
-
-
-						ref.updateRendering();
-					}
-					elem.appendChild(itemToTag(item, ipfs));
-				})
-			})
-			hashes.push(topHash.toString());
-			topHash = val.next;
+			try{await ipfs.swarm.connect(remotePeerAddress);}catch (err){}
+			const smallerContainer = document.createElement("div");
+			container.appendChild(smallerContainer);
+			messageView.update(ipfs, topHash, smallerContainer);
+		} catch (err) {
+			console.log("error displaying new messages:", err);
 		}
-		nodes.reverse();
-		nodes.forEach((v) => {
-			container.appendChild(v);
-		})
-
-		//} catch (err) {
-		//    console.log("error posting message:", err);
-		//}
-		const tree = msgReferences.toTree();
-		//render(document.getElementById("canvas") as HTMLCanvasElement, tree);
-
 	});
+
 	let thread_done = true;
-	if (!topHash) {
+	//console.log("allTheHashes:::::", allTheHashes);
+	if (allTheHashes.length == 0) {
 		const bigNode = document.createElement("div");
 		bigNode.classList.add("big_node");
 		bigNode.innerText = "empty thread. Post something!";
@@ -747,51 +453,15 @@ async function getIpfsNode(): Promise<IpfsNode> {
 		thread_done = false;
 	}
 	try {
-		//console.log("topHash:", topHash);
-		while (topHash) {
-			//console.log("bout to get");
-			//console.log("topHash:::::", topHash);
-			const obj: any = await ipfs.dag.get(topHash);
-			//console.log("obj.value:::", obj);
-			const val = new ListNode(obj.value.next, obj.value.items);
-			//console.log("val::::: ", val);
-			//when we get the actual content of the message,
-			const bigNode = document.createElement("div");
-			bigNode.classList.add("big_node");
-			const references = document.createElement("div");
-			msgReferences.get(topHash.toString()).setElement(references);
-			const message = newMessageBox(topHash.toString(), references);
-			bigNode.appendChild(message);
-			bigNode.appendChild(document.createElement("br"));
-			container.prepend(bigNode);
-			const h = topHash;
-			val.getItems(ipfs).then((items: Ull.Item[]) => {
-				//console.log("items:", items);
-				items.forEach((item) => {
-					if (item.type === Ull.LinkItem.type_name) {
-						const ref = msgReferences.get(item.data);
-						ref.addRef(h.toString());
-						ref.updateRendering();
-					}
-					message.appendChild(itemToTag(item, ipfs));
-				});
-			});
-			hashes.push(topHash.toString());
-			topHash = val.next;
-		}
-		// const container = document.getElementById("post_container");
-		// const canvas = document.createElement("canvas");
-		// canvas.id = "canvas";
-		// container.appendChild(canvas);
-		//const tree = msgReferences.toTree();
-		//render(canvas, tree);
-		if (thread_done) {
-			const bigNode = document.createElement("div");
-			bigNode.classList.add("big_node");
-			bigNode.classList.add("low_profile");
-			bigNode.innerText = "thread fully loaded";
-			container.prepend(bigNode);
-		}
+		const allTheDivs = allTheHashes.map((hash) => {
+			const div = document.createElement("div");
+			messageView.update(ipfs, hash, div);
+			return div;
+		});
+		allTheDivs.reverse();
+		allTheDivs.forEach((div) => {
+			container.appendChild(div);
+		});
 	} catch (err) {
 		console.log("error when getting whole chain:", err);
 	}
