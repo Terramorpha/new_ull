@@ -1,3 +1,7 @@
+const highlight_sleep_time = 500;
+
+
+
 class ReferenceMap {
 	map: Map<string, RefenrencedMessage>;
 	add(to: string, from: string) {
@@ -30,13 +34,48 @@ class ReferenceMap {
 	}
 }
 
-function newRepliesLink(toHash: string): HTMLElement {
+function newLink(toHash: string, fromHash: string, map: ReferenceMap): HTMLElement {
+	const a = document.createElement("a") as HTMLAnchorElement;
+	a.href = "javascript:void(0)";
+	const ft = followThreadUp(toHash, fromHash, map);
+	a.addEventListener('click', () => {
+
+
+
+		ft();
+
+
+	});
+	handleMouseOver(a, toHash);
+
+	a.href = "#" + toHash;// + item.data;
+	a.classList.add("post_link");
+	//console.log(hashes, item.data);
+	a.innerText = ">>" + toHash.slice(7, 13);
+	//div.append(a);
+	//div.append(document.createElement("br"));
+	return a;
+}
+
+
+/**
+ * create a blue link
+ *
+ * @param toHash the hash the link 
+ */
+function newBackLink(toHash: string): HTMLElement {
 	const elem = document.createElement("a");
 	elem.href = "javascript:void(0)";
 	handleMouseOver(elem, toHash);
-	elem.addEventListener("click", scrollIntoView(toHash));
+
+	const ft = followThreadDown(toHash);
+	elem.addEventListener("click", ()=>{
+		if (elem.classList.contains("selected_backlink"))elem.classList.remove("selected_backlink");
+		ft();
+	});
 	elem.classList.add("pointed_by");
 	elem.innerText = shortHash(toHash);
+	elem.setAttribute("hash", toHash);
 	return elem;
 }
 
@@ -151,7 +190,7 @@ class RefenrencedMessage {
 		if (this.element) {
 			const elems = [];
 			this.references.forEach(ref => {
-				elems.push(newRepliesLink(ref));
+				elems.push(newBackLink(ref));
 			});
 			this.element.innerText = "";
 			elems.forEach((v) => this.element.appendChild(v));
@@ -202,19 +241,26 @@ function handleMouseOver(a: HTMLElement, hash: string) {
 }
 
 /** 
- * this is a higher order function: it returns a function that,
- * when called, wil scroll to the specified hash and highlight
- * it for a second
+ * this is a higher order function: it returns a function that, when called, will
+ * scroll up a thread to the message with the specified hash and highlight it for a
+ * second. It will also highlight the backlink to the fromHash message
  */
-function scrollIntoView(hash: string) {
+function followThreadUp(hash: string, fromHash: string, map: ReferenceMap) {
 	return () => {
 		const e = document.getElementById(hash)!;
 		if (e) {
 			e.scrollIntoView(true);
 			e.classList.add("selected");
-			sleep(1000).then(() => {
+
+			const references = map.get(hash);
+			for (let i = 0;i < references.element.children.length;i++) {
+				const elem: Element = references.element.children.item(i);
+				if (elem.getAttribute("hash") === fromHash) elem.classList.add("selected_backlink");
+			}
+			sleep(highlight_sleep_time).then(() => {
 				e.classList.remove("selected");
 			});
+		
 		} else {
 			//console.log("hash not in this thread");
 			//console.log("hash:", hash);
@@ -225,6 +271,24 @@ function scrollIntoView(hash: string) {
 			u.searchParams.set("hash", hash);
 			window.open(u.href, "_blank");
 			//alert("not in this thread: foreign");
+		}
+	};
+}
+
+/** 
+ * this is a higher order function: it returns a function that, when called, wil
+ * scroll back to the message with the specified hash and highlight it for a
+ * second.   
+ */
+function followThreadDown(backToHash: string) {
+	return () => {
+		const e = document.getElementById(backToHash)!;
+		if (e) {
+			e.scrollIntoView(true);
+			e.classList.add("selected");
+			sleep(highlight_sleep_time).then(() => {
+				e.classList.remove("selected");
+			});
 		}
 	};
 }
@@ -293,7 +357,6 @@ class MessageView {
 			const references = document.createElement("div");
 			// and give it to the blue links manager
 			this.msgReferences.get(topHash.toString()).setElement(references); 
-
 			const elem = newMessageBox(topHash.toString(), references);
 			// wrapper for the message box, contains the \n
 			const bigNode = document.createElement("div");
@@ -304,15 +367,17 @@ class MessageView {
 
 			// fix this, nodes must be accessible
 			container.prepend(bigNode);
-			const h = topHash;
+			const h: Ipfs.CID = topHash;
 			val.getItems(ipfs).then((items) => {
 				items.forEach(item => {
 					if (item.type === Ull.LinkItem.type_name) {
-						const ref = this.msgReferences.get(item.data);
+						const link: Ull.LinkItem = item;
+						const hashString = createCidFromForeignCid(link.data);
+						const ref = this.msgReferences.get(hashString.toString());
 						ref.addRef(h.toString());
 						ref.updateRendering();
 					}
-					elem.appendChild(itemToTag(item, ipfs));
+					elem.appendChild(itemToTag(item, ipfs, h.toString(), this.msgReferences));
 				})
 			})
 

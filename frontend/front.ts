@@ -134,7 +134,7 @@ function sleep(ms: number) {
 
 
 
-function itemToTag(gitem: Ull.Item, node: IpfsNode): HTMLElement {
+function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:ReferenceMap): HTMLElement {
 	if (gitem.type === Ull.TextItem.type_name) {
 		const item: Ull.TextItem = gitem;
 		const p = document.createElement("p");
@@ -158,22 +158,12 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode): HTMLElement {
 		const item: Ull.LinkItem = gitem;
 		//const div = document.createElement("div");
 
-		const a = document.createElement("a") as HTMLAnchorElement;
-		a.href = "javascript:void(0)";
 		//console.log("item.data:::::", item.data);
 		const hash: Ipfs.CID = createCidFromForeignCid(item.data);
 		const hashString = hash.toString();
-		a.addEventListener('click', scrollIntoView(hashString));
-
-		handleMouseOver(a, hashString);
-
-		a.href = "#" + hashString;// + item.data;
-		a.classList.add("post_link");
-		//console.log(hashes, item.data);
-		a.innerText = ">>" + hashString.slice(7, 13);
-		//div.append(a);
-		//div.append(document.createElement("br"));
-		return a;
+	
+		const link = newLink(hashString, messageHash, map);
+		return link;	
 	} else if (gitem.type === Ull.CodeItem.type_name) {
 		const item: Ull.CodeItem = gitem;
 		const i = item as Ull.CodeItem;

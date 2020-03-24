@@ -9,6 +9,7 @@
 	--link-color: #ff006a;
 	--pointed-color: #00a2ff;
 	--selected-message-color: #ff9D00;
+	--selected-backlink-color: #00d0FF;
 	--code-background-color: #FFFFFF05;
 	--code-comment-color: #FFFFFF30;
 	/*please change this ugly color*/
@@ -216,6 +217,10 @@ img {
 
 .selected {
 	background-color: var(--selected-message-color);
+}
+
+.selected_backlink {
+	color: var(--selected-backlink-color);	
 }
 
 @media only screen and (max-device-width: 1000px) {
