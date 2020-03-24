@@ -273,7 +273,18 @@ img {
 	.code>pre {
 		font-size: 2vw;
 	}
+	.message_image {
+		width: 20em;
+		zoom: 100%;
+		display: initial;
+		float: none;
+	}
 
+	.message_image_full {
+		width: auto;
+		zoom: 100%;
+		display: initial;
+	}
 
 }
 

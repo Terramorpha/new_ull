@@ -1,56 +1,20 @@
 declare var MediaRecorder: any;
-declare module Ipfs {
-	var dag: Dag;
-	var swarm: Swarm;
-	class CID {
-		codec: string;
-		multiBaseName: string;
-		multiHash: Uint8Array;
-		version: number;
-		constructor(version: number, codec: string, multiHash: Buffer);
-		constructor(hash: string);
-	}
-}
-
-interface Swarm {
-	connect(string);
-}
-
-interface Dag {
-	get(CID): any;
-}
-
-interface Link {
-	version: number;
-	codec: string;
-	multihash: string;
-}
-
-interface IpfsNode {
-	dag: Dag;
-	swarm: Swarm;
-	add(string):any;
-}
 
 let IS_NATIVE_NODE = false;
 let IS_READONLY = false;
 const gateway = "https://ipfs.io/ipfs/";
 //const gateway = "ipfs://";
 const days = ["Sunday", "Monday","Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ];
-
+const isChrome = !!(window as any).chrome && (!!(window as any).chrome.webstore || !!(window as any).chrome.runtime);
 const post = {
 	send: document.getElementById("post_send") as HTMLButtonElement,
 	text: document.getElementById("post_text") as HTMLTextAreaElement,
 };
 
 
-function newCID(link: Link): Ipfs.CID {
-	return new Ipfs.CID(link.version, link.codec, new Buffer(link.multihash));
-}
 
-function newCIDFromString(cid: string): Ipfs.CID {
-	return new Ipfs.CID(cid);
-}
+
+
 class ListNode {
 	next: Ipfs.CID | null;
 	items: Ipfs.CID;
@@ -75,17 +39,21 @@ class ListNode {
 
 		
 	}
-	constructor(next: Link, items: Link) {
+	constructor(next: Ipfs.CID|null, items: Ipfs.CID) {
 		this.next = null;
+		//console.log("next:::::", next);
+		//console.log("items:::::", items);
 		if (next)
-			this.next = newCID(next);
-		this.items = newCID(items);
+			this.next = next;
+		this.items = items;
 	}
 }
 
 async function getListNodeFromHash(ipfsnode: IpfsNode, hash: Ipfs.CID): Promise<ListNode> {
 	const value = await ipfsnode.dag.get(hash);
-	return new ListNode(value.value.next, value.value.items);
+	//console.log("value:::::", value);
+
+	return new ListNode(value.value.next ? createCidFromForeignCid(value.value.next):null, createCidFromForeignCid(value.value.items));
 }
 
 function filterItems(items: Ull.Item[], view: MessageView): Ull.Item[] {
@@ -105,22 +73,21 @@ function filterItems(items: Ull.Item[], view: MessageView): Ull.Item[] {
 		if (item.type === Ull.ImageItem.type_name) {
 			let c: Ull.ImageItem = item;
 			let failed = false;
-			//console.log("data:", c.data);
-			try {
-				new Ipfs.CID(c.data);
-			}catch {
+			try  {
+				new Ipfs.CID(c.data["/"]);
+			}catch (err) {
 				failed = true;
 			}
+			
 			if (failed) {
-				alert(c.data + " is not a valid hash of an image");
+				alert( c.data["/"] +  " is not a valid hash" );
 				return [];
 			}
-			if (c.data == "") continue;
 		}
 		if (item.type === Ull.LinkItem.type_name) {
 			//console.log("data", item);
-			const val = view.msgReferences.map[item.data];
-			//console.log(val);
+			const val = view.msgReferences.map[item.data["/"]];
+			//console.log("val:::::", val);
 			if (!val) {
 				if (!confirm("link " + item.data + " is foreign or invalid. Continue ?"))
 					return [];
@@ -167,12 +134,14 @@ function sleep(ms: number) {
 
 
 
-function itemToTag(item: Ull.Item, node: any): HTMLElement {
-	if (item.type === Ull.TextItem.type_name) {
+function itemToTag(gitem: Ull.Item, node: IpfsNode): HTMLElement {
+	if (gitem.type === Ull.TextItem.type_name) {
+		const item: Ull.TextItem = gitem;
 		const p = document.createElement("p");
 		p.innerText = item.data;
 		return p;
-	} else if (item.type === Ull.FileItem.type_name) {
+	} else if (gitem.type === Ull.FileItem.type_name) {
+		const item: Ull.FileItem = gitem;
 		const div = document.createElement("div");
 		const a = document.createElement("a");
 		a.href = gateway + item.data.path; //item.data.path;
@@ -180,43 +149,33 @@ function itemToTag(item: Ull.Item, node: any): HTMLElement {
 		div.appendChild(a);
 		div.appendChild(document.createElement("br"));
 		return div;
-	} else if (item.type === Ull.ImageItem.type_name) {
-		//const div = document.createElement("div") as HTMLDivElement;
-		const a = document.createElement("a") as HTMLAnchorElement;
-		a.href = "javascript:void(0)";//gateway + item.data;
-		const image = newIpfsImage(item.data, node);
-		a.appendChild(image);
-		a.addEventListener("click", () => {
-			if (image.classList.contains("message_image_full")) {
-				image.classList.remove("message_image_full");
-				a.style.display = null;
-			}else {
-				image.classList.add("message_image_full");
-				a.style.display = "block";
-			}
-		})
-		return a;
+	} else if (gitem.type === Ull.ImageItem.type_name) {
+		const item: Ull.ImageItem = gitem;
 
-	} else if (item.type === Ull.LinkItem.type_name) {
+		return newIpfsImage(createCidFromForeignCid(item.data), node);
 
+	} else if (gitem.type === Ull.LinkItem.type_name) {
+		const item: Ull.LinkItem = gitem;
 		//const div = document.createElement("div");
 
 		const a = document.createElement("a") as HTMLAnchorElement;
 		a.href = "javascript:void(0)";
-		const hash = item.data;
-		a.addEventListener('click', scrollIntoView(hash));
+		//console.log("item.data:::::", item.data);
+		const hash: Ipfs.CID = createCidFromForeignCid(item.data);
+		const hashString = hash.toString();
+		a.addEventListener('click', scrollIntoView(hashString));
 
+		handleMouseOver(a, hashString);
 
-		handleMouseOver(a, hash);
-
-		a.href = "#" + item.data;
+		a.href = "#" + hashString;// + item.data;
 		a.classList.add("post_link");
 		//console.log(hashes, item.data);
-		a.innerText = ">>" + item.data.slice(7, 13);
+		a.innerText = ">>" + hashString.slice(7, 13);
 		//div.append(a);
 		//div.append(document.createElement("br"));
 		return a;
-	} else if (item.type === Ull.CodeItem.type_name) {
+	} else if (gitem.type === Ull.CodeItem.type_name) {
+		const item: Ull.CodeItem = gitem;
 		const i = item as Ull.CodeItem;
 		const tag = document.createElement("div");
 		tag.classList.add("code");
@@ -226,21 +185,27 @@ function itemToTag(item: Ull.Item, node: any): HTMLElement {
 		preTag.innerHTML = hljs.highlight(i.data.language, i.data.content).value;
 		//}
 		return tag;
-	} else if (item.type === Ull.InlineCodeItem.type_name) {
+	} else if (gitem.type === Ull.InlineCodeItem.type_name) {
+		const item: Ull.InlineCodeItem = gitem;
 		const div = document.createElement("div");
 		div.classList.add("inline_code");
 		div.innerText = item.data;
 		return div;
 	}
-	else if (item.type === Ull.VideoItem.type_name) {
-		const vid = newIpfsVideo(item.data, node);
-		vid.innerText = "[video]"
-		vid.style.width = vid.style.width = "20em";
-		return vid;
-	} else if (item.type === Ull.AudioItem.type_name) {
-		return newIpfsAudio(item.data, node);
+	else
+		//if (gitem.type === Ull.VideoItem.type_name) {
+		// const item: Ull.VideoItem = gitem;
+		// const vid = newIpfsVideo(item.data, node);
+		// vid.innerText = "[video]"
+		// vid.style.width = vid.style.width = "20em";
+		// return vid;
+		//}
+		if (gitem.type === Ull.AudioItem.type_name) {
+		const item: Ull.AudioItem = gitem;
+		return newIpfsAudio(createCidFromForeignCid(item.data), node);
 
-	} else if (item.type === Ull.TimeStampItem.type_name) {
+	} else if (gitem.type === Ull.TimeStampItem.type_name) {
+		const item: Ull.TimeStampItem = gitem;
 		const div = document.createElement("div");
 		//const content = document.createElement("div");
 		//div.appendChild(document.createElement("br"));
@@ -249,7 +214,8 @@ function itemToTag(item: Ull.Item, node: any): HTMLElement {
 		const date = new Date(item.data);
 		div.innerText = days[date.getDay()] + " " + date.toLocaleDateString() + " " + date.toLocaleTimeString();
 		return div;
-	}else if (item.type === Ull.GenericLinkItem.type_name){
+	}else if (gitem.type === Ull.GenericLinkItem.type_name){
+		const item: Ull.GenericLinkItem = gitem;
 		const real_item: Ull.GenericLinkItem = item;
 		
 		const element = document.createElement("div");
@@ -269,9 +235,9 @@ function itemToTag(item: Ull.Item, node: any): HTMLElement {
 		});		
 		return element;
 	}else{
-		console.log("received unknown item type:", item.type);
+		console.log("received unknown item type:", gitem.type);
 		const d = document.createElement("div");
-		d.innerText = JSON.stringify(item)
+		d.innerText = JSON.stringify(gitem)
 		d.style.backgroundColor = "#FF000030";
 		d.style.color = "#FFFFFF";
 		return d;
@@ -376,14 +342,18 @@ async function getIpfsNode(): Promise<IpfsNode> {
 			post_container.hidden = true;
 			IS_READONLY = true;
 		}
-		topHash = newCIDFromString(reqHash);
+		//console.log("reqHash:::::", reqHash);
+		topHash = new Ipfs.CID(reqHash);
 	} else {
 		//console.log("bout to get topHash from http");
 		//console.log("url:", url);
 		const resp = await (await fetch(url)).json();
 		const other_hashes: string[] = resp.other_hashes;
 		const resp_hash: string|null = resp.hash;
-		allTheHashes = other_hashes.map((hash)=>newCIDFromString(hash));
+		allTheHashes = other_hashes.map((hash)=>{
+			//console.log("hash:::::", hash);
+			return new Ipfs.CID(hash);
+		});
 		if (resp_hash)
 			allTheHashes.unshift(resp.hash);
 		//console.log("allTheHashes:::::", allTheHashes);
@@ -432,7 +402,8 @@ async function getIpfsNode(): Promise<IpfsNode> {
 		post.text.value = "";
 		const jsonResp: any = await resp.json();
 		const nodes: Array<HTMLElement> = [];
-		let topHash: Ipfs.CID = newCIDFromString(jsonResp.hash);
+		//console.log("jsonResp.hash:::::", jsonResp.hash);
+		let topHash: Ipfs.CID = new Ipfs.CID(jsonResp.hash);
 		try {
 			try{await ipfs.swarm.connect(remotePeerAddress);}catch (err){}
 			const smallerContainer = document.createElement("div");

@@ -1,5 +1,14 @@
 module Ull {
 
+	interface SlashLink {
+		"/": any;
+	}
+	
+
+	function createLink(hash: string) {
+		return {"/": hash};
+	}
+	
     /**
      * The structure in which an item will be presented in json.
      */
@@ -13,21 +22,21 @@ module Ull {
      * next is a hash to the next Node
      */
 	export interface Node {
-		items: string;
-		next: string;
+		items: SlashLink;
+		next: SlashLink;
 	}
 
 	export class FileItem implements Item {
 		static type_name: string = "file";
 		type: string = "file";
 		data: {
-			path: string,
+			path: SlashLink,
 			name: string
-		} = { path: "", name: "" };
+		};
 
 		constructor(name: string, hash: string) {
 			this.data.name = name;
-			this.data.path = hash;
+			this.data.path = createLink(hash);
 		}
 
 	}
@@ -67,35 +76,35 @@ module Ull {
 	export class ImageItem implements Item {
 		static type_name: string = "image";
 		type: string = "image";
-		data: string;
+		data: SlashLink;
 		constructor(hash: string) {
-			this.data = hash;
+			this.data = createLink(hash);
 		}
 	}
 	export class VideoItem implements Item {
 		static type_name: string = "video";
 		type: string = "video";
-		data: string;
+		data: SlashLink;
 		constructor(hash: string) {
-			this.data = hash;
+			this.data = createLink(hash);
 		}
 	}
 	export class AudioItem implements Item {
 		static type_name: string = "audio";
 		type: string = "audio";
-		data: string;
+		data: SlashLink;
 		constructor(hash: string) {
-			this.data = hash;
+			this.data = createLink(hash);
 		}
 	}
 
 	export class LinkItem implements Item {
 		static type_name: string = "link";
 		type: string = "link";
-		data: string;
+		data: SlashLink;
 
 		constructor(hash: string) {
-			this.data = hash;
+			this.data = createLink(hash);
 		}
 
 	}
@@ -206,4 +215,42 @@ module Ull {
 		}
 		return [new TextItem(text)];
 	}
+}
+
+declare module Ipfs {
+	var dag: Dag;
+	var swarm: Swarm;
+	class CID {
+		codec: string;
+		multiBaseName: string;
+		multiHash: Uint8Array;
+		version: number;
+		constructor(version: number, codec: string, multiHash: Buffer);
+		constructor(hash: string);
+	}
+	class Buffer {
+		constructor(any);
+	}
+}
+
+interface Swarm {
+	connect(string);
+}
+
+interface Dag {
+	get(CID): any;
+}
+
+interface IpfsNode {
+	dag: Dag;
+	swarm: Swarm;
+	add(string):any;
+	cat(hash:Ipfs.CID):any;
+	cat(string):any;
+}
+
+function createCidFromForeignCid(foreignCID: any) {
+	//console.log("foreignCID:::::", foreignCID);
+	//console.log("isChrome:", isChrome);
+	return new Ipfs.CID(foreignCID.version, foreignCID.codec, new Ipfs.Buffer((isChrome && IS_NATIVE_NODE) ? foreignCID.hash:foreignCID.multihash))
 }

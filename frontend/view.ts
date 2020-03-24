@@ -1,4 +1,3 @@
-
 class ReferenceMap {
 	map: Map<string, RefenrencedMessage>;
 	add(to: string, from: string) {
@@ -20,8 +19,8 @@ class ReferenceMap {
 			o[to] = [];
 		}
 		for (const to in this.map) {
-			(this.map[to].references as string[]).forEach(from => {
-				o[from].push(to);
+			(this.map[to].references as string[]).forEach(_from => {
+				o[_from].push(to);
 			})
 		}
 		return o;
@@ -41,22 +40,51 @@ function newRepliesLink(toHash: string): HTMLElement {
 	return elem;
 }
 
+async function catIpfs(hash: Ipfs.CID , ipfsNode: IpfsNode): Promise<any[]> {
+	if (isChrome && !IS_NATIVE_NODE){
+		const buffers = [];
+		for await (const chunk of ipfsNode.cat(hash)) {
+			buffers.push(chunk);
+		}
+
+		return buffers;
+	}else {
+		return [await ipfsNode.cat(hash)];
+	}
+}
 
 /**
  * create an image element which will, after the content is retrieved, display the linked image
  * @param hash the hash to the video file
  * @param ipfsNode the node
  */
-function newIpfsImage(hash: string, ipfsNode: any): HTMLImageElement {
+function newIpfsImage(hash: Ipfs.CID, ipfsNode: IpfsNode): HTMLElement {
+
 	const img = document.createElement("img");
 	img.classList.add("message_image");
-	ipfsNode.cat(hash).then((u8array: Uint8Array) => {
-		const blob = new Blob([u8array.buffer]);
+	img.setAttribute("hash", hash.toString());
+	img.alt = "[Image]";
+	catIpfs(hash, ipfsNode).then((u8arrays: Uint8Array[]) => {
+		const blob = new Blob(u8arrays);
 		const uri = URL.createObjectURL(blob)
 		img.src = uri;
-	});
-	img.alt = "[Image]";
-	return img;
+	})
+
+
+	const a = document.createElement("a") as HTMLAnchorElement;
+	a.href = "javascript:void(0)";//gateway + item.data;
+	a.appendChild(img);
+	a.addEventListener("click", () => {
+		if (img.classList.contains("message_image_full")) {
+			img.classList.remove("message_image_full");
+			a.style.display = null;
+		}else {
+			img.classList.add("message_image_full");
+			a.style.display = "block";
+		}
+	})
+
+	return a;
 }
 
 
@@ -65,9 +93,10 @@ function newIpfsImage(hash: string, ipfsNode: any): HTMLImageElement {
  * @param hash the hash to the video file
  * @param ipfsNode the node
  */
-function newIpfsAudio(hash: string, ipfsNode: any): HTMLAudioElement {
+function newIpfsAudio(hash: Ipfs.CID, ipfsNode: IpfsNode): HTMLAudioElement {
 	const au = document.createElement("audio") as HTMLAudioElement;
 	au.setAttribute("controls", "");
+	au.setAttribute("hash", hash.toString());
 	ipfsNode.cat(hash).then((u8array: Uint8Array) => {
 		const blob = new Blob([u8array.buffer]);
 		const uri = URL.createObjectURL(blob)
@@ -81,7 +110,7 @@ function newIpfsAudio(hash: string, ipfsNode: any): HTMLAudioElement {
  * @param hash the hash to the video file
  * @param ipfsNode the node to use to get the file
  */
-function newIpfsVideo(hash: string, ipfsNode: any): HTMLVideoElement {
+function newIpfsVideo(hash: Ipfs.CID, ipfsNode: IpfsNode): HTMLVideoElement {
 	const vid: HTMLVideoElement = document.createElement("video");
 	vid.controls = true;
 	//const stream: Plugin = ipfsNode.files.catPullStream(hash);
@@ -90,7 +119,7 @@ function newIpfsVideo(hash: string, ipfsNode: any): HTMLVideoElement {
 	//console.log("media_stream:", media_stream);
 	//vid.srcObject = media_stream;
 
-	vid.src = "https://ipfs.io/ipfs/" + hash;
+	vid.src = "https://ipfs.io/ipfs/" + hash.toString();
 
 	/* ipfsNode.cat(hash).then((u8array: Uint8Array) => {
 		const blob = new Blob([u8array.buffer])
@@ -177,7 +206,7 @@ function handleMouseOver(a: HTMLElement, hash: string) {
  * when called, wil scroll to the specified hash and highlight
  * it for a second
  */
-function scrollIntoView(hash) {
+function scrollIntoView(hash: string) {
 	return () => {
 		const e = document.getElementById(hash)!;
 		if (e) {
