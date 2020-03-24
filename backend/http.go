@@ -106,14 +106,15 @@ func NewLinkedList(sh *ipfs.Shell, lastHash string) *LinkedList {
 }
 
 func (ll *LinkedList) Handler() func(w http.ResponseWriter, r *http.Request) {
-	m := sync.Mutex{}
+
+	m := sync.RWMutex{}
 	hashList := NewHashList(ll.hashFile)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
-			m.Lock()
-			defer m.Unlock()
+			m.RLock()
+			defer m.RUnlock()
 
 			id, err := ll.shell.ID()
 			if err != nil {
