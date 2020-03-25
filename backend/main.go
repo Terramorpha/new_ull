@@ -16,10 +16,19 @@ import (
 
 var Config = struct {
 	BindAddress string
+	IsHttps     bool
+	CertFile    string
+	KeyFile     string
+	HashFile    string
 }{}
 
 func init() {
+
 	flag.StringVar(&Config.BindAddress, "port", ":8000", "the address to bind to")
+	flag.BoolVar(&Config.IsHttps, "https", true, "wether to use https or not")
+	flag.StringVar(&Config.CertFile, "certfile", "/home/terramorpha/keys/fullchain.pem", "the fullchain.pem file to use")
+	flag.StringVar(&Config.KeyFile, "keyfile", "/home/terramorpha/keys/privkey.pem", "the privkey.pem file to use")
+	flag.StringVar(&Config.HashFile, "hashfile", "hash", "the file in which to store all message hashes")
 	flag.Parse()
 }
 
@@ -87,10 +96,21 @@ func main() {
 	})
 
 	//err := http.ListenAndServe(Config.BindAddress, nil)
-	err := http.ListenAndServeTLS(Config.BindAddress, "/home/terramorpha/keys/fullchain.pem", "/home/terramorpha/keys/privkey.pem", nil)
-	if err != nil {
-		log.Fatal("couldn't listen:", err)
-		return
+
+	if Config.IsHttps {
+		log.Println("using https")
+		err := http.ListenAndServeTLS(Config.BindAddress, Config.CertFile, Config.KeyFile, nil)
+		if err != nil {
+			log.Fatal("error:", err)
+			return
+		}
+
+	} else {
+		log.Println("using http")
+		err := http.ListenAndServe(Config.BindAddress, nil)
+		if err != nil {
+			log.Fatal("error:", err)
+		}
 	}
 }
 
