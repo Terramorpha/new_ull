@@ -37,15 +37,8 @@ class ReferenceMap {
 function newLink(toHash: string, fromHash: string, map: ReferenceMap): HTMLElement {
 	const a = document.createElement("a") as HTMLAnchorElement;
 	a.href = "javascript:void(0)";
-	const ft = followThreadUp(toHash, fromHash, map);
-	a.addEventListener('click', () => {
 
-
-
-		ft();
-
-
-	});
+	a.addEventListener('click',followThreadUp(toHash, fromHash, map));
 	handleMouseOver(a, toHash);
 
 	a.href = "#" + toHash;// + item.data;
