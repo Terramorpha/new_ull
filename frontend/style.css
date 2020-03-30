@@ -100,8 +100,8 @@ p {
 }
 
 .tripcode {
-	/* color: var(--text-color); */
-	color: var(--selected-backlink-color);
+	color: var(--text-color);
+	/* color: var(--selected-backlink-color); */
 	display: inline;
 }
 

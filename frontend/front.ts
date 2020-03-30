@@ -227,15 +227,7 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		return element;
 	}else if (gitem.type === Ull.TripCodeItem.type_name) {
 		const item: Ull.TripCodeItem = gitem;
-		let word = item.data;
-		try {
-			word = tripcode.makeWordFromHash(item.data);
-		}catch(err) {
-			
-		}
-		const div = document.createElement("div");
-		div.classList.add("tripcode");
-		div.innerText = word;
+		const div = newTripCodeFromHash(item.data);
 		return div;
 	}else{
 		console.log("received unknown item type:", gitem.type);

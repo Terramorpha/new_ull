@@ -323,6 +323,27 @@ function newMessageBox(name: string, references: HTMLDivElement): HTMLElement {
 	return message;
 }
 
+function newTripCodeFromHash(hash: string): HTMLElement {
+	let word = hash;
+	try {
+		word = tripcode.makeWordFromHash(hash);
+	}catch(err) {}
+	const colors = tripcode.makeColorListFromHash(hash, 2);
+	const spans = [];
+	const skip = 4;
+	for (let i = 0;i < word.length;i++) {
+		const e = document.createElement("span");
+		e.innerText = word[i];
+		// e.style.color = colors[i];
+		e.style.backgroundColor = colors[Math.floor(i/skip)];
+		spans.push(e);
+	}
+	const div = document.createElement("div");
+	spans.forEach((span) => div.appendChild(span));
+	div.classList.add("tripcode");
+	return div;	
+}
+
 class MessageView {
 	msgReferences: ReferenceMap;
 	hashes: string[];
@@ -354,7 +375,6 @@ class MessageView {
 			bigNode.classList.add("big_node");
 			bigNode.appendChild(elem);
 			bigNode.appendChild(document.createElement("br"));
-
 
 			// fix this, nodes must be accessible
 			container.prepend(bigNode);
