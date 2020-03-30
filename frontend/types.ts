@@ -117,12 +117,22 @@ module Ull {
 			this.data = text;
 		}
 	}
+
 	export class TimeStampItem {
 		static type_name: string = "timestamp";
 		type: string = "timestamp";
 		data: number;
 		constructor(time) {
 			this.data = time;
+		}
+	}
+
+	export class TripCodeItem {
+		static type_name: string = "tripcode";
+		type: string = "tripcode";
+		data: string;
+		constructor(code: string) {
+			this.data = code;
 		}
 	}
 
@@ -140,7 +150,6 @@ module Ull {
 			};
 		}
 	}
-	
 	
 	export interface Parser {
 		pattern: RegExp;
@@ -189,6 +198,12 @@ module Ull {
 			pattern: /\[\[(.*?)\]\[(?:video|vid)\]\]/,
 			parse(match: RegExpMatchArray): Item {
 				return new VideoItem(match[1]);
+			}
+		},
+		{
+			pattern: /\[\[(.*?)\]\[(?:tripcode|trip)\]\]/,
+			parse(match: RegExpMatchArray): Item {
+				return new TripCodeItem(match[1]);
 			}
 		},
 		{// generic link

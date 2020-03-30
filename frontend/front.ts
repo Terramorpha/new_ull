@@ -1,3 +1,4 @@
+
 declare var MediaRecorder: any;
 
 let IS_NATIVE_NODE = false;
@@ -224,6 +225,18 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 			element.innerText = real_item.data.description;
 		});		
 		return element;
+	}else if (gitem.type === Ull.TripCodeItem.type_name) {
+		const item: Ull.TripCodeItem = gitem;
+		let word = item.data;
+		try {
+			word = tripcode.makeWordFromHash(item.data);
+		}catch(err) {
+			
+		}
+		const div = document.createElement("div");
+		div.classList.add("tripcode");
+		div.innerText = word;
+		return div;
 	}else{
 		console.log("received unknown item type:", gitem.type);
 		const d = document.createElement("div");
@@ -231,7 +244,6 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		d.style.backgroundColor = "#FF000030";
 		d.style.color = "#FFFFFF";
 		return d;
-		
 	}
 }
 

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	//"fmt"
+	"crypto/sha256"
 	"errors"
 	ipfs "github.com/ipfs/go-ipfs-api"
 	"log"
@@ -12,6 +14,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"fmt"
 )
 
 var Config = struct {
@@ -68,6 +71,19 @@ func CORSWrapper(f func(http.ResponseWriter, *http.Request)) func(w http.Respons
 	}
 }
 
+/*
+
+	export class TripCodeItem {
+		static type_name: string = "tripcode";
+		type: string = "tripcode";
+		data: string;
+		constructor(code: string) {
+			this.data = code;
+		}
+	}
+
+*/
+
 func main() {
 	YourIp = "/ip4/173.178.130.146/tcp/4001"
 	sh := ipfs.NewLocalShell()
@@ -84,6 +100,29 @@ func main() {
 			}
 
 		}
+		return nil
+	})
+
+	ll.AddFilter(func(items *[]Item) error {
+
+		for i := range *items {
+			val := &(*items)[i]
+			if val.Type == "tripcode" {
+				log.Printf("%#+v\n", val)
+				str, ok := val.Data.(string)
+				if !ok {
+					panic(fmt.Sprintf("could not turn %#+v into string", val.Data))
+				}
+				bs := sha256.Sum256([]byte(str + "pénicéline"))
+				hashStr := hex.EncodeToString(bs[:])
+				val.Data = hashStr
+
+				log.Printf("%#+v\n", val)
+				//tripcode, ok :=
+			}
+
+		}
+
 		return nil
 	})
 

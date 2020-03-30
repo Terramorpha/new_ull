@@ -99,6 +99,12 @@ p {
 	text-decoration: none;
 }
 
+.tripcode {
+	/* color: var(--text-color); */
+	color: var(--selected-backlink-color);
+	display: inline;
+}
+
 button {
 	border: none;
 	margin: 0.1em;

@@ -1,7 +1,5 @@
 const highlight_sleep_time = 500;
 
-
-
 class ReferenceMap {
 	map: Map<string, RefenrencedMessage>;
 	add(to: string, from: string) {
