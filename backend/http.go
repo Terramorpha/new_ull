@@ -69,6 +69,7 @@ func NewHashList(fileName string) *HashList {
 		fmt.Println("couldn't open old hash file:", err)
 		return o
 	}
+	o.file = file
 	bufread := bufio.NewReader(file)
 	for line, _, err := bufread.ReadLine(); err == nil; line, _, err = bufread.ReadLine() {
 		str := string(line)
@@ -93,6 +94,7 @@ func (hl *HashList) AddHash(hash string) {
 		hl.file = file
 	}
 	fmt.Fprintf(hl.file, "%s\n", hash)
+	
 	hl.hashes = append([]string{hash}, hl.hashes...)
 }
 
