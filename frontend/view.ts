@@ -159,8 +159,6 @@ function newIpfsVideo(hash: Ipfs.CID, ipfsNode: IpfsNode): HTMLVideoElement {
 	return vid;
 }
 
-
-
 class RefenrencedMessage {
 	element: HTMLDivElement | null;
 	references: Array<string>;
@@ -194,7 +192,6 @@ class RefenrencedMessage {
 		this.updateRendering();
 	}
 }
-
 
 /**
  * a is the element to set the handlers on
@@ -385,8 +382,12 @@ class MessageView {
 			// fix this, nodes must be accessible
 			container.prepend(bigNode);
 			const h: Ipfs.CID = topHash;
-			let first_code = true;
 			val.getItems(ipfs).then((items) => {
+				while (items[0].type == Ull.TripCodeItem.type_name && items.length != 0) {
+					const item: Ull.TripCodeItem = items.shift();
+					const t = itemToTag(item, ipfs, h.toString(), this.msgReferences);
+					tripcodes.appendChild(t);
+				}
 				items.forEach(item => {
 					if (item.type === Ull.LinkItem.type_name) {
 						const link: Ull.LinkItem = item;
@@ -395,14 +396,7 @@ class MessageView {
 						ref.addRef(h.toString());
 						ref.updateRendering();
 					}
-					if (item.type === Ull.TripCodeItem.type_name) {
-						const t = itemToTag(item, ipfs, h.toString(), this.msgReferences);
-						tripcodes.appendChild(t);
-						if (first_code) {
-							first_code = false;
-							return;
-						}
-					}
+
 					elem.appendChild(itemToTag(item, ipfs, h.toString(), this.msgReferences));
 				})
 			})

@@ -187,16 +187,7 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		div.classList.add("inline_code");
 		div.innerText = item.data;
 		return div;
-	}
-	else
-		//if (gitem.type === Ull.VideoItem.type_name) {
-		// const item: Ull.VideoItem = gitem;
-		// const vid = newIpfsVideo(item.data, node);
-		// vid.innerText = "[video]"
-		// vid.style.width = vid.style.width = "20em";
-		// return vid;
-		//}
-		if (gitem.type === Ull.AudioItem.type_name) {
+	} else if (gitem.type === Ull.AudioItem.type_name) {
 		const item: Ull.AudioItem = gitem;
 		return newIpfsAudio(createCidFromForeignCid(item.data), node);
 
@@ -234,7 +225,21 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		const item: Ull.TripCodeItem = gitem;
 		const div = newTripCodeFromHash(item.data);
 		return div;
-	}else{
+	}else if (gitem.type == Ull.QuoteItem.type_name) {
+		const item: Ull.QuoteItem = gitem;
+		const text: string = item.data;
+		const list = text.split("\n");
+		
+		if (list[list.length - 1] === ""){
+			list.pop();
+		}
+		
+		const quotedText = list.map(s => "> " + s).join("\n");
+		const p = document.createElement("p");
+		p.classList.add("quote");
+		p.innerText = quotedText;
+		return p;
+	} else {
 		console.log("received unknown item type:", gitem.type);
 		const d = document.createElement("div");
 		d.innerText = JSON.stringify(gitem)
@@ -363,12 +368,6 @@ async function getIpfsNode(): Promise<IpfsNode> {
 			//console.log("bout to connect ipfs");
 			const promise: Promise<any> = ipfs.swarm.connect(resp.address);
 			await promise;
-			//console.log("connected ipfs");
-
-
-
-
-			
 		} catch (err) {
 			//console.log("error when connecting to peer:", err);
 		}
@@ -388,7 +387,6 @@ async function getIpfsNode(): Promise<IpfsNode> {
 		let messages: Ull.Item[] = filterItems(Ull.extract(post.text.value), messageView);
 		if (messages.length === 0) return;
 		messages = addMetadata(messages);
-		console.log(messages);
 		const body = JSON.stringify(messages, (k, v) => v);
 		const resp = await fetch(url, {
 			method: "POST",

@@ -14,6 +14,7 @@
 	--code-comment-color: #FFFFFF30;
 	/*please change this ugly color*/
 	--inline-code-color: #d0ff00;
+	--quote-color: var(--inline-code-color);
 }
 
 .low_profile {
@@ -74,6 +75,15 @@ p {
 	flex: 1 1 auto;
 }
 
+.monospace {
+	font-family: monospace;
+}
+
+.quote {
+	color: var(--quote-color);
+		font-family: monospace;
+}
+
 .inline_code {
 	color: var(--inline-code-color);
 	font-family: monospace;
@@ -105,6 +115,7 @@ p {
 	font-family: monospace;
 	display: inline;
 	text-decoration: none;
+	margin-right: 0.5em;
 }
 
 button {

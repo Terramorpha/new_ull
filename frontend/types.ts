@@ -150,6 +150,15 @@ module Ull {
 			};
 		}
 	}
+	// (greentext)
+	export class QuoteItem  implements Item {
+		static type_name: string = "quote";
+		type: string = "quote";
+		data: string;
+		constructor(data: string) {
+			this.data = data;
+		}
+	}
 	
 	export interface Parser {
 		pattern: RegExp;
@@ -212,6 +221,17 @@ module Ull {
 				return new GenericLinkItem(match[1], match[2]);
 			}
 		},
+		{// greentexts
+			pattern: /((?:>\s*.*\n)*?(?:>\s*.*))/m,
+			parse(match: RegExpMatchArray):Item {
+				const lines: string[] = match[1].split("\n");
+				for (let i = 0;i < lines.length;i++) {
+					lines[i] = lines[i].replace(/>\s*/, "")
+				}
+				const text = lines.join("\n")
+				return new QuoteItem(text)
+			}
+		}
 	];
 
 	export function extract(text: string): Item[] {
