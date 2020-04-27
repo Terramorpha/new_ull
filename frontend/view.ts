@@ -289,7 +289,7 @@ function shortHash(hash: string): string {
 	return hash.slice(7, 13)
 }
 
-function newMessageBox(name: string, references: HTMLDivElement): HTMLElement {
+function newMessageBox(name: string, references: HTMLDivElement, tripCode?: HTMLElement): HTMLElement {
 	const message = document.createElement("div");
 	message.id = name;
 	message.className = "message";
@@ -317,6 +317,8 @@ function newMessageBox(name: string, references: HTMLDivElement): HTMLElement {
 		}
 	});
 	header.appendChild(id);
+	if (tripCode)
+		header.appendChild(tripCode);
 	header.appendChild(references);
 	message.appendChild(header);
 	message.appendChild(document.createElement("br"));
@@ -335,7 +337,8 @@ function newTripCodeFromHash(hash: string): HTMLElement {
 		const e = document.createElement("span");
 		e.innerText = word[i];
 		// e.style.color = colors[i];
-		e.style.backgroundColor = colors[Math.floor(i/skip)];
+		//e.style.backgroundColor = colors[Math.floor(i/skip)];
+		e.style.color = colors[Math.floor(i/skip)];
 		spans.push(e);
 	}
 	const div = document.createElement("div");
@@ -368,8 +371,11 @@ class MessageView {
 			// a div to put all the blue links in
 			const references = document.createElement("div");
 			// and give it to the blue links manager
-			this.msgReferences.get(topHash.toString()).setElement(references); 
-			const elem = newMessageBox(topHash.toString(), references);
+			this.msgReferences.get(topHash.toString()).setElement(references);
+
+			let tripcodes = document.createElement("div");
+			
+			const elem = newMessageBox(topHash.toString(), references, tripcodes);
 			// wrapper for the message box, contains the \n
 			const bigNode = document.createElement("div");
 			bigNode.classList.add("big_node");
@@ -379,6 +385,7 @@ class MessageView {
 			// fix this, nodes must be accessible
 			container.prepend(bigNode);
 			const h: Ipfs.CID = topHash;
+			let first_code = true;
 			val.getItems(ipfs).then((items) => {
 				items.forEach(item => {
 					if (item.type === Ull.LinkItem.type_name) {
@@ -387,6 +394,14 @@ class MessageView {
 						const ref = this.msgReferences.get(hashString.toString());
 						ref.addRef(h.toString());
 						ref.updateRendering();
+					}
+					if (item.type === Ull.TripCodeItem.type_name) {
+						const t = itemToTag(item, ipfs, h.toString(), this.msgReferences);
+						tripcodes.appendChild(t);
+						if (first_code) {
+							first_code = false;
+							return;
+						}
 					}
 					elem.appendChild(itemToTag(item, ipfs, h.toString(), this.msgReferences));
 				})

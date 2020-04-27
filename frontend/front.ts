@@ -111,7 +111,14 @@ function createBase64Uri(ar: ArrayBuffer): string {
 function addMetadata(items: Ull.Item[]): Ull.Item[] {
 	const now = Date.now();
 	const new_item = new Ull.TimeStampItem(now);
+	// console.log("items:::", items)
 	items.push(new_item);
+	const types = items.map(item => item.type);
+	// console.log("types:::", types);
+	if (!(contains(types, Ull.TripCodeItem.type_name))) {
+		const id = getID();
+		items.unshift(new Ull.TripCodeItem(id));	
+	}
 	return items;
 }
 
@@ -132,8 +139,6 @@ function contains(list: any[], item: any): boolean {
 function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-
 
 function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:ReferenceMap): HTMLElement {
 	if (gitem.type === Ull.TextItem.type_name) {
@@ -383,6 +388,7 @@ async function getIpfsNode(): Promise<IpfsNode> {
 		let messages: Ull.Item[] = filterItems(Ull.extract(post.text.value), messageView);
 		if (messages.length === 0) return;
 		messages = addMetadata(messages);
+		console.log(messages);
 		const body = JSON.stringify(messages, (k, v) => v);
 		const resp = await fetch(url, {
 			method: "POST",
@@ -413,6 +419,7 @@ async function getIpfsNode(): Promise<IpfsNode> {
 	if (allTheHashes.length == 0) {
 		const bigNode = document.createElement("div");
 		bigNode.classList.add("big_node");
+		bigNode.classList.add("low_profile")
 		bigNode.innerText = "empty thread. Post something!";
 		container.prepend(bigNode);
 		thread_done = false;
