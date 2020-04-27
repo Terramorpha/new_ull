@@ -335,7 +335,7 @@ async function getIpfsNode(): Promise<IpfsNode> {
 	let remotePeerAddress;
 	const post_container = document.getElementById("post_container");
 	const hash = null;//custom.hash;
-	let topHash: Ipfs.CID;
+	// let topHash: Ipfs.CID;
 	let allTheHashes: Ipfs.CID[] = [];
 	const params = new URLSearchParams(window.location.search);
 	const reqHash = params.get("hash");
@@ -346,8 +346,8 @@ async function getIpfsNode(): Promise<IpfsNode> {
 			post_container.hidden = true;
 			IS_READONLY = true;
 		}
-		//console.log("reqHash:::::", reqHash);
-		topHash = new Ipfs.CID(reqHash);
+		console.log("reqHash:::::", reqHash);
+		allTheHashes.push(new Ipfs.CID(reqHash));
 	} else {
 		//console.log("bout to get topHash from http");
 		//console.log("url:", url);

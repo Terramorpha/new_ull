@@ -1,19 +1,19 @@
 :root {
 	--id-color: #00A000;
 	/* --background-color: #222222; */
-	--background-color: #16161a;
+	--background-color: #16161A;
 	--text-color: #FFFFFF;
 	--message-color: #FFFFFF10;
 	--message-color-not-transparent: #303030;
 	--button-color: #505050;
-	--link-color: #ff006a;
-	--pointed-color: #00a2ff;
+	--link-color: #FF006A;
+	--pointed-color: #00A2FF;
 	--selected-message-color: #FFFFFF20;
-	--selected-backlink-color: #00d0FF;
+	--selected-backlink-color: #00D0FF;
 	--code-background-color: #FFFFFF05;
 	--code-comment-color: #FFFFFF30;
 	/*please change this ugly color*/
-	--inline-code-color: #d0ff00;
+	--inline-code-color: #D0FF00;
 	--quote-color: var(--inline-code-color);
 }
 
@@ -126,6 +126,7 @@ button {
 html,
 body {
 	height: 100%;
+	background-color: var(--background-color);
 }
 
 h1,
