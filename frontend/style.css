@@ -15,6 +15,8 @@
 	/*please change this ugly color*/
 	--inline-code-color: #D0FF00;
 	--quote-color: var(--inline-code-color);
+	--header-size: xx-small;
+	--text-size: medium;
 }
 
 .low_profile {
@@ -98,15 +100,24 @@ p {
 
 .pointed_by {
 	color: var(--pointed-color);
+	display: inline;
 	font-family: monospace;
 	text-decoration: none;
+	font-size: var(--header-size);
 	/* margin-left: 1em; */
 }
 
 .post_id {
 	font-family: monospace;
+	display: inline;
 	color: var(--id-color);
 	text-decoration: none;
+	/* font-size: var(--header-size); */
+}
+
+.tripcode_container {
+	display: inline-block;
+	margin-left: 0.5em;
 }
 
 .tripcode {
@@ -114,8 +125,19 @@ p {
 	/* color: var(--selected-backlink-color); */
 	font-family: monospace;
 	display: inline;
-	text-decoration: none;
+	/* text-decoration: none; */
+	margin: 0;
+	padding: 0;
 	margin-right: 0.5em;
+	/* font-size: var(--header-size); */
+}
+
+.tripcode_char {
+	font-size: inherit;
+}
+
+span {
+		font-size: var(--text-size);
 }
 
 button {
@@ -185,24 +207,28 @@ img {
 	background-color: var(--message-color);
 	border-radius: 0.25em;
 	display: inline-block;
-	padding: 1em;
+	padding: 0.5em;
 	margin: 0.25em;
 }
 
 
-.message_header {
-	display: inline-flex;
-	flex-wrap: wrap;
-}
+/* .message_header { */
+/* 	display: inline-flex; */
+/* 	flex-wrap: wrap; */
+/* } */
 
-.message_header > div {
-	margin-left: 0.5em;
-	margin-right: 0.5em;
+.message_header > * {
+	/* margin-left: 0.5em; */
+	/* margin-right: 0.5em; */
+	display: inline-block;
+	/* vertical-align: top; */
+	font-size: var(--header-size);
 }
 
 .pointers_container {
 	display: inline-flex;
 	flex-wrap: wrap;
+	float: right;
 }
 
 .pointers_container * {

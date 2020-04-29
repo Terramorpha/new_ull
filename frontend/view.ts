@@ -286,7 +286,7 @@ function shortHash(hash: string): string {
 	return hash.slice(7, 13)
 }
 
-function newMessageBox(name: string, references: HTMLDivElement, tripCode?: HTMLElement): HTMLElement {
+function newMessageBox(name: string, references: HTMLDivElement, tripCodes?: HTMLElement): HTMLElement {
 	const message = document.createElement("div");
 	message.id = name;
 	message.className = "message";
@@ -295,7 +295,6 @@ function newMessageBox(name: string, references: HTMLDivElement, tripCode?: HTML
 	header.classList.add("message_header");
 
 	const short_name = shortHash(name);
-
 	const id: HTMLAnchorElement = document.createElement("a");
 	id.innerText = short_name;
 	id.classList.add("post_id");
@@ -314,8 +313,8 @@ function newMessageBox(name: string, references: HTMLDivElement, tripCode?: HTML
 		}
 	});
 	header.appendChild(id);
-	if (tripCode)
-		header.appendChild(tripCode);
+	if (tripCodes)
+		header.appendChild(tripCodes);
 	header.appendChild(references);
 	message.appendChild(header);
 	message.appendChild(document.createElement("br"));
@@ -324,7 +323,7 @@ function newMessageBox(name: string, references: HTMLDivElement, tripCode?: HTML
 
 function newTripCodeFromHash(hash: string): HTMLElement {
 	let word = hash;
-	try {
+	try {// if the hash is not a certain length, this function might crash
 		word = tripcode.makeWordFromHash(hash);
 	}catch(err) {}
 	const colors = tripcode.makeColorListFromHash(hash, 2);
@@ -336,12 +335,14 @@ function newTripCodeFromHash(hash: string): HTMLElement {
 		// e.style.color = colors[i];
 		//e.style.backgroundColor = colors[Math.floor(i/skip)];
 		e.style.color = colors[Math.floor(i/skip)];
+
+		e.classList.add("tripcode_char");
 		spans.push(e);
 	}
-	const div = document.createElement("div");
-	spans.forEach((span) => div.appendChild(span));
-	div.classList.add("tripcode");
-	return div;	
+	const elem = document.createElement("div");
+	spans.forEach((span) => elem.appendChild(span));
+	elem.classList.add("tripcode");
+	return elem;	
 }
 
 class MessageView {
@@ -371,6 +372,7 @@ class MessageView {
 			this.msgReferences.get(topHash.toString()).setElement(references);
 
 			let tripcodes = document.createElement("div");
+			tripcodes.classList.add("tripcode_container");
 			
 			const elem = newMessageBox(topHash.toString(), references, tripcodes);
 			// wrapper for the message box, contains the \n
