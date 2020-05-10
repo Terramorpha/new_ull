@@ -7,6 +7,7 @@ import (
 	//"fmt"
 	"crypto/sha256"
 	"errors"
+	"fmt"
 	ipfs "github.com/ipfs/go-ipfs-api"
 	"log"
 	"mime"
@@ -14,7 +15,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"fmt"
 )
 
 var Config = struct {
@@ -23,6 +23,7 @@ var Config = struct {
 	CertFile    string
 	KeyFile     string
 	HashFile    string
+	TripCodeSalt        string
 }{}
 
 func init() {
@@ -32,7 +33,13 @@ func init() {
 	flag.StringVar(&Config.CertFile, "certfile", "/home/terramorpha/keys/fullchain.pem", "the fullchain.pem file to use")
 	flag.StringVar(&Config.KeyFile, "keyfile", "/home/terramorpha/keys/privkey.pem", "the privkey.pem file to use")
 	flag.StringVar(&Config.HashFile, "hashfile", "hash", "the file in which to store all message hashes")
+	flag.StringVar(&Config.TripCodeSalt, "salt", "", "the salt to use for creating TripCodes")
 	flag.Parse()
+	if Config.TripCodeSalt == "" {
+		log.Fatal("tripcode salt must not be empty")
+	}
+
+	Config.TripCodeSalt = strings.Trim(Config.TripCodeSalt, " \n\r\t")
 }
 
 type ErrorMessage struct {
@@ -113,7 +120,7 @@ func main() {
 				if !ok {
 					panic(fmt.Sprintf("could not turn %#+v into string", val.Data))
 				}
-				bs := sha256.Sum256([]byte(str + "pénicéline"))
+				bs := sha256.Sum256([]byte(str + Config.TripCodeSalt))
 				hashStr := hex.EncodeToString(bs[:])
 				val.Data = hashStr
 
