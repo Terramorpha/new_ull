@@ -11,7 +11,7 @@ const post = {
 	send: document.getElementById("post_send") as HTMLButtonElement,
 	text: document.getElementById("post_text") as HTMLTextAreaElement,
 };
-
+const settings = Settings.getSettingStore();
 
 
 
@@ -108,16 +108,19 @@ function createBase64Uri(ar: ArrayBuffer): string {
 	return uri;
 }
 
-function addMetadata(items: Ull.Item[]): Ull.Item[] {
+function addMetadata(items: Ull.Item[], settings: Settings.SettingStore): Ull.Item[] {
 	const now = Date.now();
 	const new_item = new Ull.TimeStampItem(now);
 	// console.log("items:::", items)
 	items.push(new_item);
 	const types = items.map(item => item.type);
 	// console.log("types:::", types);
+	console.log(settings);
 	if (!(contains(types, Ull.TripCodeItem.type_name))) {
-		const id = getID();
-		items.unshift(new Ull.TripCodeItem(id));	
+		if (settings.prependDefaultTripcode) {
+			const id = settings.defaultTripcode;
+			items.unshift(new Ull.TripCodeItem(id));	
+		}
 	}
 	return items;
 }
@@ -140,7 +143,7 @@ function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:ReferenceMap): HTMLElement {
+function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:ReferenceMap, settings: Settings.SettingStore): HTMLElement {
 	if (gitem.type === Ull.TextItem.type_name) {
 		const item: Ull.TextItem = gitem;
 		const p = document.createElement("p");
@@ -168,7 +171,7 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		const hash: Ipfs.CID = createCidFromForeignCid(item.data);
 		const hashString = hash.toString();
 	
-		const link = newLink(hashString, messageHash, map);
+		const link = newLink(hashString, messageHash, map, settings.previewMessageOnLinkHover);
 		return link;	
 	} else if (gitem.type === Ull.CodeItem.type_name) {
 		const item: Ull.CodeItem = gitem;
@@ -339,7 +342,7 @@ async function getIpfsNode(): Promise<IpfsNode> {
 	let allTheHashes: Ipfs.CID[] = [];
 	const params = new URLSearchParams(window.location.search);
 	const reqHash = params.get("hash");
-	const messageView: MessageView = new MessageView();
+	const messageView: MessageView = new MessageView(settings);
 	
 	if (reqHash) {
 		if (post_container) {
@@ -386,7 +389,7 @@ async function getIpfsNode(): Promise<IpfsNode> {
 	post.send.addEventListener("click", async () => {
 		let messages: Ull.Item[] = filterItems(Ull.extract(post.text.value), messageView);
 		if (messages.length === 0) return;
-		messages = addMetadata(messages);
+		messages = addMetadata(messages, settings);
 		const body = JSON.stringify(messages, (k, v) => v);
 		const resp = await fetch(url, {
 			method: "POST",

@@ -32,12 +32,13 @@ class ReferenceMap {
 	}
 }
 
-function newLink(toHash: string, fromHash: string, map: ReferenceMap): HTMLElement {
+function newLink(toHash: string, fromHash: string, map: ReferenceMap, previewMessageOnLinkHover:boolean): HTMLElement {
 	const a = document.createElement("a") as HTMLAnchorElement;
 	a.href = "javascript:void(0)";
 
 	a.addEventListener('click',followThreadUp(toHash, fromHash, map));
-	handleMouseOver(a, toHash);
+	if (previewMessageOnLinkHover)
+		handleMouseOver(a, toHash);
 
 	a.href = "#" + toHash;// + item.data;
 	a.classList.add("post_link");
@@ -54,13 +55,14 @@ function newLink(toHash: string, fromHash: string, map: ReferenceMap): HTMLEleme
  *
  * @param toHash the hash the link 
  */
-function newBackLink(toHash: string): HTMLElement {
+function newBackLink(toHash: string, settings: Settings.SettingStore): HTMLElement {
 	const elem = document.createElement("a");
 	elem.href = "javascript:void(0)";
-	handleMouseOver(elem, toHash);
+	if (settings.previewMessageOnLinkHover)
+		handleMouseOver(elem, toHash);
 
 	const ft = followThreadDown(toHash);
-	elem.addEventListener("click", ()=>{
+	elem.addEventListener("click", () => {
 		if (elem.classList.contains("selected_backlink"))elem.classList.remove("selected_backlink");
 		ft();
 	});
@@ -167,29 +169,29 @@ class ReferencedMessage {
 		this.references = new Array();
 	}
 
-	addRef(ref: string) {
+	addRef(ref: string, settings: Settings.SettingStore) {
 
 		if (!contains(this.references, ref)) {
 			this.references.push(ref);
 		}
-		this.updateRendering();
+		this.updateRendering(settings);
 	}
 
-	updateRendering() {
+	updateRendering(settings: Settings.SettingStore) {
 		if (this.element) {
 			const elems = [];
 			this.references.forEach(ref => {
-				elems.push(newBackLink(ref));
+				elems.push(newBackLink(ref, settings));
 			});
 			this.element.innerText = "";
 			elems.forEach((v) => this.element.appendChild(v));
 		}
 	}
 
-	setElement(elem: HTMLDivElement) {
+	setElement(elem: HTMLDivElement, settings: Settings.SettingStore) {
 		elem.classList.add("pointers_container");
 		this.element = elem;
-		this.updateRendering();
+		this.updateRendering(settings);
 	}
 }
 
@@ -346,12 +348,14 @@ function newTripCodeFromHash(hash: string): HTMLElement {
 }
 
 class MessageView {
+	settings: Settings.SettingStore;
 	msgReferences: ReferenceMap;
 	hashes: string[];
 
-	constructor() {
+	constructor(store: Settings.SettingStore) {
 		this.hashes = [];
 		this.msgReferences = new ReferenceMap();
+		this.settings = store;
 	}
 	
 	/**
@@ -369,7 +373,7 @@ class MessageView {
 			// a div to put all the blue links in
 			const references = document.createElement("div");
 			// and give it to the blue links manager
-			this.msgReferences.get(topHash.toString()).setElement(references);
+			this.msgReferences.get(topHash.toString()).setElement(references, this.settings);
 
 			let tripcodes = document.createElement("div");
 			tripcodes.classList.add("tripcode_container");
@@ -387,7 +391,7 @@ class MessageView {
 			val.getItems(ipfs).then((items) => {
 				while (items[0].type == Ull.TripCodeItem.type_name && items.length != 0) {
 					const item: Ull.TripCodeItem = items.shift();
-					const t = itemToTag(item, ipfs, h.toString(), this.msgReferences);
+					const t = itemToTag(item, ipfs, h.toString(), this.msgReferences, this.settings);
 					tripcodes.appendChild(t);
 				}
 				items.forEach(item => {
@@ -395,11 +399,11 @@ class MessageView {
 						const link: Ull.LinkItem = item;
 						const hashString = createCidFromForeignCid(link.data);
 						const ref = this.msgReferences.get(hashString.toString());
-						ref.addRef(h.toString());
-						ref.updateRendering();
+						ref.addRef(h.toString(), this.settings);
+						ref.updateRendering(this.settings);
 					}
 
-					elem.appendChild(itemToTag(item, ipfs, h.toString(), this.msgReferences));
+					elem.appendChild(itemToTag(item, ipfs, h.toString(), this.msgReferences, this.settings));
 				})
 			})
 
