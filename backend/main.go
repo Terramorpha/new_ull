@@ -18,12 +18,12 @@ import (
 )
 
 var Config = struct {
-	BindAddress string
-	IsHttps     bool
-	CertFile    string
-	KeyFile     string
-	HashFile    string
-	TripCodeSalt        string
+	BindAddress  string
+	IsHttps      bool
+	CertFile     string
+	KeyFile      string
+	HashFile     string
+	TripCodeSalt string
 }{}
 
 func init() {
@@ -106,6 +106,21 @@ func main() {
 				return errors.New("video forbidden")
 			}
 
+		}
+		return nil
+	})
+
+	ll.AddFilter(func(items *[]Item) error {
+		for _, v := range *items {
+			if v.Type == "tripcode" {
+				str, ok := v.Data.(string)
+				if !ok {
+					return errors.New("tripcode not a string")
+				}
+				if len(str) == 0 {
+					return errors.New("tripcodes must not be empty")
+				}
+			}
 		}
 		return nil
 	})
