@@ -75,7 +75,7 @@ module tripcode {
 		for (let i = 0;i < listLen;i++)
 			indices.push(0);
 		const bytes = toByteArray(hash);
-		for (let i  = 0;i < bytes.length;i++) if (bytes[i] === undefined) throw "invalid hash";
+		for (let i  = 0;i < bytes.length;i++) if (bytes[i] === undefined) return [color_palette[0], color_palette[1]];
 		const colors = [];
 		const l = 4;
 		for (let i = 0;i < bytes.length;i ++) {
@@ -89,7 +89,7 @@ module tripcode {
 	export function makeWordFromHash(hash: string):string {
 		let vowel = false;
 		const bytes = toByteArray(hash);
-		for (let i  = 0;i < bytes.length;i++) if (bytes[i] === undefined) throw "invalid hash";
+		for (let i  = 0;i < bytes.length;i++) if (bytes[i] === undefined) return "unknowne";
 		let name:string = "";
 		const l = 4;
 		for (let i = 0;i < bytes.length;i += l) {

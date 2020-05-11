@@ -124,7 +124,6 @@ func main() {
 		}
 		return nil
 	})
-
 	ll.AddFilter(func(items *[]Item) error {
 
 		for i := range *items {

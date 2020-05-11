@@ -13,9 +13,6 @@ const post = {
 };
 const settings = Settings.getSettingStore();
 
-
-
-
 class ListNode {
 	next: Ipfs.CID | null;
 	items: Ipfs.CID;
@@ -160,7 +157,6 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		return div;
 	} else if (gitem.type === Ull.ImageItem.type_name) {
 		const item: Ull.ImageItem = gitem;
-
 		return newIpfsImage(createCidFromForeignCid(item.data), node);
 
 	} else if (gitem.type === Ull.LinkItem.type_name) {
@@ -343,6 +339,49 @@ async function getIpfsNode(): Promise<IpfsNode> {
 	const params = new URLSearchParams(window.location.search);
 	const reqHash = params.get("hash");
 	const messageView: MessageView = new MessageView(settings);
+
+	const preview = document.getElementById("preview");
+	let previewOn = false;
+	let previewElem = null;
+	const update = () => {
+		if (previewElem)
+			previewElem.remove();
+		let messages = filterItems(Ull.extract(post.text.value), messageView);
+		if (messages.length === 0) return;
+		messages = addMetadata(messages, settings);
+		const elem = messageView.render("unknown", messages, ipfs);
+		const big = document.createElement("div");
+		elem.classList.add("message_preview");
+		big.classList.add("message_preview_background");
+		big.style.position = "fixed"
+		big.appendChild(elem);
+
+		document.body.appendChild(big);
+		const rect: any = post.text.getBoundingClientRect();
+		//console.log("rect:", elem.getBoundingClientRect());
+		big.style.left = rect.right.toString() + "px";
+		// big.style.top = (rect.top - elem.getBoundingClientRect().height / 2).toString() + "px";
+		big.style.top = (rect.top).toString() + "px";
+		//elem = createDiv(hash, rect.right, rect.top);
+		//elem.style.backgroundColor = "#FFFFFF";
+		previewElem = big
+	}
+	const buttonInnerHTML = preview.innerHTML;
+	preview.addEventListener("click", () => {
+		console.log
+		if (previewOn) {
+			preview.innerHTML = buttonInnerHTML;
+			previewElem.remove()
+			previewElem = null;
+			post.text.removeEventListener("keyup", update);
+			previewOn = false;
+		}else{
+			preview.innerHTML = "Preview On"
+			update()
+			post.text.addEventListener("keyup", update);
+			previewOn = true;
+		}
+	})
 	
 	if (reqHash) {
 		if (post_container) {

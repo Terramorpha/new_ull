@@ -370,45 +370,50 @@ class MessageView {
 			this.hashes.push(topHash.toString());
 			const val = await getListNodeFromHash(ipfs, topHash);
 			
-			// a div to put all the blue links in
-			const references = document.createElement("div");
-			// and give it to the blue links manager
-			this.msgReferences.get(topHash.toString()).setElement(references, this.settings);
-
-			let tripcodes = document.createElement("div");
-			tripcodes.classList.add("tripcode_container");
-			
-			const elem = newMessageBox(topHash.toString(), references, tripcodes);
-			// wrapper for the message box, contains the \n
 			const bigNode = document.createElement("div");
 			bigNode.classList.add("big_node");
-			bigNode.appendChild(elem);
-			bigNode.appendChild(document.createElement("br"));
-
+			
 			// fix this, nodes must be accessible
 			container.prepend(bigNode);
-			const h: Ipfs.CID = topHash;
+			const thisHash = topHash;
 			val.getItems(ipfs).then((items) => {
-				while (items[0].type == Ull.TripCodeItem.type_name && items.length != 0) {
-					const item: Ull.TripCodeItem = items.shift();
-					const t = itemToTag(item, ipfs, h.toString(), this.msgReferences, this.settings);
-					tripcodes.appendChild(t);
-				}
-				items.forEach(item => {
-					if (item.type === Ull.LinkItem.type_name) {
-						const link: Ull.LinkItem = item;
-						const hashString = createCidFromForeignCid(link.data);
-						const ref = this.msgReferences.get(hashString.toString());
-						ref.addRef(h.toString(), this.settings);
-						ref.updateRendering(this.settings);
-					}
-
-					elem.appendChild(itemToTag(item, ipfs, h.toString(), this.msgReferences, this.settings));
-				})
+				bigNode.appendChild(this.render(thisHash.toString(), items, ipfs));
+				bigNode.appendChild(document.createElement("br"));
 			})
-
 			topHash = val.next;
 		}
+	}
+
+	render(hash: string, items: Ull.Item[], ipfs: IpfsNode): HTMLElement {
+		
+		// a div to put all the blue links in
+		const references = document.createElement("div");
+		// and give it to the blue links manager
+		//TODO: this creates garbage
+		this.msgReferences.get(hash).setElement(references, this.settings);
+		
+		let tripcodes = document.createElement("div");
+		tripcodes.classList.add("tripcode_container");
+		const elem = newMessageBox(hash, references, tripcodes);
+		// wrapper for the message box, contains the \n
+
+		while (items[0].type == Ull.TripCodeItem.type_name && items.length != 0) {
+			const item: Ull.TripCodeItem = items.shift();
+			const t = itemToTag(item, ipfs, hash, this.msgReferences, this.settings);
+			tripcodes.appendChild(t);
+		}
+		items.forEach(item => {
+			if (item.type === Ull.LinkItem.type_name) {
+				const link: Ull.LinkItem = item;
+				const hashString = createCidFromForeignCid(link.data);
+				const ref = this.msgReferences.get(hashString.toString());
+				ref.addRef(hash, this.settings);
+				
+			}
+
+			elem.appendChild(itemToTag(item, ipfs, hash, this.msgReferences, this.settings));
+		})
+		return elem;
 	}
 }
 

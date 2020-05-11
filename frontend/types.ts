@@ -209,7 +209,7 @@ module Ull {
 				return new VideoItem(match[1]);
 			}
 		},
-		{
+		{//[[marmelade][tripcode]]
 			pattern: /\[\[(.*?)\]\[(?:tripcode|trip)\]\]/,
 			parse(match: RegExpMatchArray): Item {
 				return new TripCodeItem(match[1]);
@@ -285,6 +285,7 @@ interface IpfsNode {
 }
 
 function createCidFromForeignCid(foreignCID: any) {
+	if (foreignCID["/"]) return new Ipfs.CID(foreignCID["/"]);
 	//console.log("foreignCID:::::", foreignCID);
 	//console.log("isChrome:", isChrome);
 	return new Ipfs.CID(foreignCID.version, foreignCID.codec, new Ipfs.Buffer((isChrome && IS_NATIVE_NODE) ? foreignCID.hash:foreignCID.multihash))
