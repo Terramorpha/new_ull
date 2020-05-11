@@ -1,23 +1,23 @@
 const highlight_sleep_time = 500;
 
 class ReferenceMap {
-	map: Map<string, RefenrencedMessage>;
+	map: Map<string, ReferencedMessage>;
 	add(to: string, from: string) {
 		if (!this.map[to]) this.map[to] = [];
 		if (this.map[to].every((v) => v != from))
 			(this.map[to] as string[]).push(from);
 
 	}
-	get(to: string): RefenrencedMessage {
+	get(to: string): ReferencedMessage {
 		const o = this.map[to];
 		if (o) return o;
-		this.map[to] = new RefenrencedMessage();
+		this.map[to] = new ReferencedMessage();
 		return this.map[to];
 	}
 	toTree(): Map<string, string[]> {
 		const o = new Map();
 		for (const to in this.map) {
-			if (!(this.map[to] as RefenrencedMessage).element) continue;
+			if (!(this.map[to] as ReferencedMessage).element) continue;
 			o[to] = [];
 		}
 		for (const to in this.map) {
@@ -159,7 +159,7 @@ function newIpfsVideo(hash: Ipfs.CID, ipfsNode: IpfsNode): HTMLVideoElement {
 	return vid;
 }
 
-class RefenrencedMessage {
+class ReferencedMessage {
 	element: HTMLDivElement | null;
 	references: Array<string>;
 	constructor() {
