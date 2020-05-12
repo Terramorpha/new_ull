@@ -19,13 +19,6 @@ class ListNode {
 	async getItems(ipfsnode: IpfsNode): Promise<Ull.Item[]> {
 		const values = await ipfsnode.dag.get(this.items);
 		//const Link = new (window as any).Ipfs.Link(this.items);
-		//console.log(Link);
-		//const resp = await ipfsnode.dag.put(values, {
-		//	format: Link.codec,
-		//	hashAlg: "sha2-256",
-		//});
-		//console.log(resp);
-		//console.log(values);
 		return values.value;
 	}
 
@@ -39,8 +32,6 @@ class ListNode {
 	}
 	constructor(next: Ipfs.CID|null, items: Ipfs.CID) {
 		this.next = null;
-		//console.log("next:::::", next);
-		//console.log("items:::::", items);
 		if (next)
 			this.next = next;
 		this.items = items;
@@ -49,8 +40,6 @@ class ListNode {
 
 async function getListNodeFromHash(ipfsnode: IpfsNode, hash: Ipfs.CID): Promise<ListNode> {
 	const value = await ipfsnode.dag.get(hash);
-	//console.log("value:::::", value);
-
 	return new ListNode(value.value.next ? createCidFromForeignCid(value.value.next):null, createCidFromForeignCid(value.value.items));
 }
 
@@ -58,8 +47,6 @@ function filterItems(items: Ull.Item[], view: MessageView): Ull.Item[] {
 	let o: Ull.Item[] = [];
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i];
-		//console.log(item);
-
 		if (item.type === Ull.TextItem.type_name) {
 			let m: Ull.TextItem = item;
 			if (m.data == "") continue;
@@ -83,9 +70,7 @@ function filterItems(items: Ull.Item[], view: MessageView): Ull.Item[] {
 			}
 		}
 		if (item.type === Ull.LinkItem.type_name) {
-			//console.log("data", item);
 			const val = view.msgReferences.map[item.data["/"]];
-			//console.log("val:::::", val);
 			if (!val) {
 				if (!confirm("link " + item.data + " is foreign or invalid. Continue ?"))
 					return [];
@@ -108,11 +93,8 @@ function createBase64Uri(ar: ArrayBuffer): string {
 function addMetadata(items: Ull.Item[], settings: Settings.SettingStore): Ull.Item[] {
 	const now = Date.now();
 	const new_item = new Ull.TimeStampItem(now);
-	// console.log("items:::", items)
 	items.push(new_item);
 	const types = items.map(item => item.type);
-	// console.log("types:::", types);
-	console.log(settings);
 	if (!(contains(types, Ull.TripCodeItem.type_name))) {
 		if (settings.prependDefaultTripcode) {
 			const id = settings.defaultTripcode;
@@ -239,7 +221,7 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		p.innerText = quotedText;
 		return p;
 	} else {
-		console.log("received unknown item type:", gitem.type);
+		console.warn("received unknown item type:", gitem.type);
 		const d = document.createElement("div");
 		d.innerText = JSON.stringify(gitem)
 		d.style.backgroundColor = "#FF000030";
@@ -303,20 +285,15 @@ async function getIpfsNode(): Promise<IpfsNode> {
 					stream = null;
 					recorder = null;
 					state = "idle";
-					//console.log(chunks);
 					const blob = new Blob(chunks);
-					//console.log(blob);
 					const ar = await new Response(blob).arrayBuffer();
 					let hashes;
 					try {
 						hashes = await ipfs.add(ar);
-						//console.log(hashes);
 						const hash = hashes[0].hash;
 						post.text.value += "[["+ hash +"][audio]]";
-						//console.log(ar);
-						//console.log(createBase64Uri(ar));
 					} catch (err) {
-						console.log("couldn't add audio to ipfs:", err);
+						console.error("couldn't add audio to ipfs:", err);
 					}
 				};
 				recorder.stop();
@@ -358,7 +335,6 @@ async function getIpfsNode(): Promise<IpfsNode> {
 
 		document.body.appendChild(big);
 		const rect: any = post.text.getBoundingClientRect();
-		//console.log("rect:", elem.getBoundingClientRect());
 		big.style.left = rect.right.toString() + "px";
 		// big.style.top = (rect.top - elem.getBoundingClientRect().height / 2).toString() + "px";
 		big.style.top = (rect.top).toString() + "px";
@@ -368,7 +344,6 @@ async function getIpfsNode(): Promise<IpfsNode> {
 	}
 	const buttonInnerHTML = preview.innerHTML;
 	preview.addEventListener("click", () => {
-		console.log
 		if (previewOn) {
 			preview.innerHTML = buttonInnerHTML;
 			previewElem.remove()
@@ -388,32 +363,23 @@ async function getIpfsNode(): Promise<IpfsNode> {
 			post_container.hidden = true;
 			IS_READONLY = true;
 		}
-		console.log("reqHash:::::", reqHash);
 		allTheHashes.push(new Ipfs.CID(reqHash));
 	} else {
-		//console.log("bout to get topHash from http");
-		//console.log("url:", url);
 		const resp = await (await fetch(url)).json();
 		const other_hashes: string[] = resp.other_hashes;
 		const resp_hash: string|null = resp.hash;
 		allTheHashes = other_hashes.map((hash)=>{
-			//console.log("hash:::::", hash);
 			return new Ipfs.CID(hash);
 		});
 		if (resp_hash)
 			allTheHashes.unshift(resp.hash);
-		//console.log("allTheHashes:::::", allTheHashes);
-		//console.log("response:::::", resp);		
 		try {
-			//console.log("resp:", resp)
 			remotePeerAddress = resp.address;
-			//console.log("bout to connect ipfs");
 			const promise: Promise<any> = ipfs.swarm.connect(resp.address);
 			await promise;
 		} catch (err) {
-			//console.log("error when connecting to peer:", err);
+			console.warn("error when connecting to peer:", err);
 		}
-		//console.log("top hash:", topHash);
 	}
 
 
@@ -442,7 +408,6 @@ async function getIpfsNode(): Promise<IpfsNode> {
 		post.text.value = "";
 		const jsonResp: any = await resp.json();
 		const nodes: Array<HTMLElement> = [];
-		//console.log("jsonResp.hash:::::", jsonResp.hash);
 		let topHash: Ipfs.CID = new Ipfs.CID(jsonResp.hash);
 		try {
 			try{await ipfs.swarm.connect(remotePeerAddress);}catch (err){}
@@ -450,12 +415,11 @@ async function getIpfsNode(): Promise<IpfsNode> {
 			container.appendChild(smallerContainer);
 			messageView.update(ipfs, topHash, smallerContainer);
 		} catch (err) {
-			console.log("error displaying new messages:", err);
+			console.warn("error displaying new messages:", err);
 		}
 	});
 
 	let thread_done = true;
-	//console.log("allTheHashes:::::", allTheHashes);
 	if (allTheHashes.length == 0) {
 		const bigNode = document.createElement("div");
 		bigNode.classList.add("big_node");
@@ -475,6 +439,6 @@ async function getIpfsNode(): Promise<IpfsNode> {
 			container.appendChild(div);
 		});
 	} catch (err) {
-		console.log("error when getting whole chain:", err);
+		console.warn("error when getting whole chain:", err);
 	}
 })();

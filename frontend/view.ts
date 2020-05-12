@@ -42,7 +42,6 @@ function newLink(toHash: string, fromHash: string, map: ReferenceMap, previewMes
 
 	a.href = "#" + toHash;// + item.data;
 	a.classList.add("post_link");
-	//console.log(hashes, item.data);
 	a.innerText = ">>" + toHash.slice(7, 13);
 	//div.append(a);
 	//div.append(document.createElement("br"));
@@ -145,12 +144,6 @@ function newIpfsAudio(hash: Ipfs.CID, ipfsNode: IpfsNode): HTMLAudioElement {
 function newIpfsVideo(hash: Ipfs.CID, ipfsNode: IpfsNode): HTMLVideoElement {
 	const vid: HTMLVideoElement = document.createElement("video");
 	vid.controls = true;
-	//const stream: Plugin = ipfsNode.files.catPullStream(hash);
-	//console.log("stream:", stream);
-	//const media_stream = new MediaStream(stream);
-	//console.log("media_stream:", media_stream);
-	//vid.srcObject = media_stream;
-
 	vid.src = "https://ipfs.io/ipfs/" + hash.toString();
 
 	/* ipfsNode.cat(hash).then((u8array: Uint8Array) => {
@@ -213,14 +206,13 @@ function handleMouseOver(a: HTMLElement, hash: string) {
 
 			document.body.appendChild(big);
 			const rect: any = a.getBoundingClientRect();
-			//console.log("rect:", elem.getBoundingClientRect());
 			big.style.left = rect.right.toString() + "px";
 			big.style.top = (rect.top - elem.getBoundingClientRect().height / 2).toString() + "px";
 			//elem = createDiv(hash, rect.right, rect.top);
 			//elem.style.backgroundColor = "#FFFFFF";
 			return;
 		}
-		console.log("didn't find node to display");
+		console.warn("didn't find node to display");
 
 	});
 
@@ -252,10 +244,6 @@ function followThreadUp(hash: string, fromHash: string, map: ReferenceMap) {
 			});
 		
 		} else {
-			//console.log("hash not in this thread");
-			//console.log("hash:", hash);
-			//custom.openHashInWindow(hash);
-			//alert("todo");
 			const u = new URL(window.location.href);
 			u.search = "";
 			u.searchParams.set("hash", hash);
@@ -304,11 +292,6 @@ function newMessageBox(name: string, references: HTMLDivElement, tripCodes?: HTM
 	//set the callback for the id copying
 	id.addEventListener('click', async () => {
 		if (IS_READONLY) {
-			//post.text.value = name;
-			//post.text.select();
-			//const result = document.execCommand("copy");
-			//console.log("clipboard:", result);
-			//console.log("val:", name);
 			await navigator.clipboard.writeText(name);
 		} else {
 			post.text.value += ">>" + name + "\n";
