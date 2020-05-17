@@ -1,7 +1,7 @@
 :root {
 	--id-color: #00A000;
 	/* --background-color: #222222; */
-	--background-color: #16161A;
+	--background-color: #16161F;
 	--text-color: #FFFFFF;
 	--message-color: #FFFFFF10;
 	--message-color-not-transparent: #303030;
@@ -384,12 +384,6 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
 	color: #bf79db;
 }
 
-.hljs-string {
-	color: var(--selected-message-color);
-}
-
-
-
 .hljs-bullet,
 .hljs-subst,
 .hljs-title,
@@ -407,8 +401,14 @@ Monokai style - ported by Luigi Maselli - http://grigio.org
 	color: var(--inline-code-color);
 }
 
+
+.hljs-string {
+	color: #FFB000
+}
+
+
+.hljs-quote
 .hljs-comment,
-.hljs-quote,
 .hljs-deletion,
 .hljs-meta {
 	color: var(--code-comment-color);
