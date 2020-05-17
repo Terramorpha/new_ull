@@ -40,11 +40,12 @@ module Settings {
 		prependDefaultTripcode: boolean;
 		defaultTripcode: string;
 		previewMessageOnLinkHover: boolean;
-
+		relativeTimeStamp: boolean;
 		constructor() {
 			this.prependDefaultTripcode = true;
 			this.previewMessageOnLinkHover = true;
 			this.defaultTripcode = generateID();
+			this.relativeTimeStamp = true;
 		}
 		
 	}

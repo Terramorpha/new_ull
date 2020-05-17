@@ -122,6 +122,59 @@ function sleep(ms: number) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function relativeTimeDifference(difference:number) {
+	const vs: any = [
+		[1000, "millisecond"],
+		[60 * 1000, "second"],
+		[60 * 60 * 1000, "minute"],
+		[24 * 60 * 60 * 1000, "hour"],
+		[7 * 24 * 60 * 60 * 1000, "day"],
+		[31 * 24 * 60 * 60 * 1000, "week"],
+		[365 * 24 * 60 * 60 * 1000, "month"],
+		[36500 * 24 * 60 * 60 * 1000, "year"],
+	];
+	for (let i = 0;i < vs.length ; i++) {
+		if (difference < vs[i][0]) {
+			if (i == 0) {
+				return difference + " millisecond" + (difference > 1 ? "s":"") + " ago";
+			}
+			const n = Math.floor(difference / vs[i - 1][0]);
+			return n + " " + vs[i][1] + (n > 1 ? "s":"") + " ago";
+		}
+	}
+
+
+
+
+	
+
+	
+	// if (difference < 1000) {
+	// 	const n = difference;
+	// 	return n + " millisecond" + (n == 1?"s":"") + " ago"
+	// } else if (difference < 60 * 1000) {
+	// 	const n = Math.floor(difference/1000);
+	// 	return n + " second" + (n == 1?"s":"") + " ago"
+	// } else if (difference < 60 * 60 * 1000) {
+	// 	const n = Math.floor(difference/(60 * 1000));
+	// 	return n + " minute" + (n == 1?"s":"") + " ago";
+	// } else if (difference < 24 * 60 * 60 * 1000) {
+	// 	const n = Math.floor(difference/(60 * 60 * 1000));
+	// 	return n + " hour" + (n == 1?"s":"") + " ago";
+	// } else if (difference < 7 * 24 * 60 * 60 * 1000){
+	// 	const n = Math.floor(difference/(60 * 60 * 1000));
+	// 	return n + " hour" + (n == 1?"s":"") + " ago";
+	// 	div.innerText = Math.floor(difference / (24 * 60 * 60 * 1000)) + " days ago";
+	// } else if (difference < 31 * 24 * 60 * 60 * 1000){
+	// 	div.innerText = Math.floor(difference / (24 * 60 * 60 * 1000)) + " weeks ago";
+	// } else if (difference < 356.25 * 24 * 60 * 60 * 1000){
+	// 	div.innerText = Math.floor(difference / (31 * 24 * 60 * 60 * 1000)) + " months ago";
+	// } else {
+	// 	div.innerText = Math.floor(difference / (31 * 24 * 60 * 60 * 1000)) + " years ago";
+	// }
+}
+
+
 function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:ReferenceMap, settings: Settings.SettingStore): HTMLElement {
 	if (gitem.type === Ull.TextItem.type_name) {
 		const item: Ull.TextItem = gitem;
@@ -175,12 +228,18 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 	} else if (gitem.type === Ull.TimeStampItem.type_name) {
 		const item: Ull.TimeStampItem = gitem;
 		const div = document.createElement("div");
-		//const content = document.createElement("div");
-		//div.appendChild(document.createElement("br"));
-		//div.appendChild(content);
 		div.classList.add("low_profile");
-		const date = new Date(item.data);
-		div.innerText = days[date.getDay()] + " " + date.toLocaleDateString() + " " + date.toLocaleTimeString();
+		if (settings.relativeTimeStamp) {
+			const now = new Date().getTime();
+			const difference = now - item.data;
+			div.innerText = relativeTimeDifference(difference);
+		}else{
+			const date = new Date(item.data);
+			div.innerText = days[date.getDay()] + " " + date.toLocaleDateString() + " " + date.toLocaleTimeString();
+		}
+		
+		
+
 		return div;
 	}else if (gitem.type === Ull.GenericLinkItem.type_name){
 		const item: Ull.GenericLinkItem = gitem;
