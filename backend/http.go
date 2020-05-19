@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"log"
 )
 
 type Link struct {
@@ -118,11 +119,14 @@ func (ll *LinkedList) Handler() func(w http.ResponseWriter, r *http.Request) {
 			m.RLock()
 			defer m.RUnlock()
 
+			var addr *string = nil
 			id, err := ll.shell.ID()
 			if err != nil {
-				panic(err)
+				log.Printf("error getting node ID: %v\n", err)
+			}else {
+				addrTemp := fmt.Sprintf("%s/ipfs/%s", YourIp, id.ID)
+				addr = &addrTemp
 			}
-			addr := fmt.Sprintf("%s/ipfs/%s", YourIp, id.ID)
 
 			enc := json.NewEncoder(w)
 
@@ -132,7 +136,7 @@ func (ll *LinkedList) Handler() func(w http.ResponseWriter, r *http.Request) {
 					OtherHashes []string `json:"other_hashes"`
 					Addr        *string  `json:"address"`
 				}{
-					Hash: nil, Addr: &addr, OtherHashes: []string{},
+					Hash: nil, Addr: addr, OtherHashes: []string{},
 				})
 			}else {
 				enc.Encode(struct {
@@ -140,7 +144,7 @@ func (ll *LinkedList) Handler() func(w http.ResponseWriter, r *http.Request) {
 					OtherHashes []string `json:"other_hashes"`
 					Addr        *string  `json:"address"`
 				}{
-					Hash: &hashList.hashes[0], Addr: &addr, OtherHashes: hashList.hashes[1:],
+					Hash: &hashList.hashes[0], Addr: addr, OtherHashes: hashList.hashes[1:],
 				})
 			}
 

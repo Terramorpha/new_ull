@@ -24,6 +24,7 @@ var Config = struct {
 	KeyFile      string
 	HashFile     string
 	TripCodeSalt string
+	ApiPath string
 }{}
 
 func init() {
@@ -34,6 +35,7 @@ func init() {
 	flag.StringVar(&Config.KeyFile, "keyfile", "/home/terramorpha/keys/privkey.pem", "the privkey.pem file to use")
 	flag.StringVar(&Config.HashFile, "hashfile", "hash", "the file in which to store all message hashes")
 	flag.StringVar(&Config.TripCodeSalt, "salt", "", "the salt to use for creating TripCodes")
+	flag.StringVar(&Config.ApiPath, "api", "/ip4/127.0.0.1/tcp/5001", "the ipfs api's address")
 	flag.Parse()
 	if Config.TripCodeSalt == "" {
 		log.Fatal("tripcode salt must not be empty")
@@ -78,22 +80,9 @@ func CORSWrapper(f func(http.ResponseWriter, *http.Request)) func(w http.Respons
 	}
 }
 
-/*
-
-	export class TripCodeItem {
-		static type_name: string = "tripcode";
-		type: string = "tripcode";
-		data: string;
-		constructor(code: string) {
-			this.data = code;
-		}
-	}
-
-*/
-
 func main() {
 	YourIp = "/ip4/173.178.130.146/tcp/4001"
-	sh := ipfs.NewLocalShell()
+	sh := ipfs.NewShell(Config.ApiPath)
 	if sh == nil {
 		panic("couldn't create local shell handle")
 	}
