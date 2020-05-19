@@ -355,13 +355,15 @@ class MessageView {
 			
 			const bigNode = document.createElement("div");
 			bigNode.classList.add("big_node");
+			if (this.settings.compactView)
+				bigNode.classList.add("medium_container");
 			
 			// fix this, nodes must be accessible
 			container.prepend(bigNode);
 			const thisHash = topHash;
 			val.getItems(ipfs).then((items) => {
 				bigNode.appendChild(this.render(thisHash.toString(), items, ipfs));
-				bigNode.appendChild(document.createElement("br"));
+				// bigNode.appendChild(document.createElement("br"));
 			})
 			topHash = val.next;
 		}

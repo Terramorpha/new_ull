@@ -41,11 +41,13 @@ module Settings {
 		defaultTripcode: string;
 		previewMessageOnLinkHover: boolean;
 		relativeTimeStamp: boolean;
+		compactView: boolean;
 		constructor() {
 			this.prependDefaultTripcode = true;
 			this.previewMessageOnLinkHover = true;
 			this.defaultTripcode = generateID();
 			this.relativeTimeStamp = true;
+			this.compactView = false;
 		}
 		
 	}

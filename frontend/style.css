@@ -76,6 +76,14 @@ p {
 	overflow-y: autohidden;
 	overflow-x: hidden;
 	flex: 1 1 auto;
+	
+}
+
+/* the nodes are inside, they must be inline-block */
+.medium_container {
+	display: inline-block;
+	vertical-align: middle;
+	text-align: justify;
 }
 
 .monospace {
@@ -206,6 +214,7 @@ img {
 	display: inline-block;
 	padding: 0.5em;
 	margin: 0.25em;
+	text-align: left;
 }
 
 

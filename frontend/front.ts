@@ -471,6 +471,8 @@ async function getIpfsNode(): Promise<IpfsNode> {
 		try {
 			try{await ipfs.swarm.connect(remotePeerAddress);}catch (err){}
 			const smallerContainer = document.createElement("div");
+			if (settings.compactView)
+				smallerContainer.classList.add("medium_container");
 			container.appendChild(smallerContainer);
 			messageView.update(ipfs, topHash, smallerContainer);
 		} catch (err) {
@@ -490,6 +492,8 @@ async function getIpfsNode(): Promise<IpfsNode> {
 	try {
 		const allTheDivs = allTheHashes.map((hash) => {
 			const div = document.createElement("div");
+			if (settings.compactView)
+				div.classList.add("medium_container");
 			messageView.update(ipfs, hash, div);
 			return div;
 		});
