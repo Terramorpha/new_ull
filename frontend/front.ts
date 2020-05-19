@@ -1,9 +1,14 @@
 
+
 declare var MediaRecorder: any;
+declare var IpfsHttpClient: any;
 
 let IS_NATIVE_NODE = false;
 let IS_READONLY = false;
 const gateway = "https://ipfs.io/ipfs/";
+// const http_api = "https://cdn.jsdelivr.net/npm/ipfs-http-client/dist/index.min.js";
+
+
 //const gateway = "ipfs://";
 const days = ["Sunday", "Monday","Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ];
 const isChrome = !!(window as any).chrome && (!!(window as any).chrome.webstore || !!(window as any).chrome.runtime);
@@ -142,36 +147,6 @@ function relativeTimeDifference(difference:number) {
 			return n + " " + vs[i][1] + (n > 1 ? "s":"") + " ago";
 		}
 	}
-
-
-
-
-	
-
-	
-	// if (difference < 1000) {
-	// 	const n = difference;
-	// 	return n + " millisecond" + (n == 1?"s":"") + " ago"
-	// } else if (difference < 60 * 1000) {
-	// 	const n = Math.floor(difference/1000);
-	// 	return n + " second" + (n == 1?"s":"") + " ago"
-	// } else if (difference < 60 * 60 * 1000) {
-	// 	const n = Math.floor(difference/(60 * 1000));
-	// 	return n + " minute" + (n == 1?"s":"") + " ago";
-	// } else if (difference < 24 * 60 * 60 * 1000) {
-	// 	const n = Math.floor(difference/(60 * 60 * 1000));
-	// 	return n + " hour" + (n == 1?"s":"") + " ago";
-	// } else if (difference < 7 * 24 * 60 * 60 * 1000){
-	// 	const n = Math.floor(difference/(60 * 60 * 1000));
-	// 	return n + " hour" + (n == 1?"s":"") + " ago";
-	// 	div.innerText = Math.floor(difference / (24 * 60 * 60 * 1000)) + " days ago";
-	// } else if (difference < 31 * 24 * 60 * 60 * 1000){
-	// 	div.innerText = Math.floor(difference / (24 * 60 * 60 * 1000)) + " weeks ago";
-	// } else if (difference < 356.25 * 24 * 60 * 60 * 1000){
-	// 	div.innerText = Math.floor(difference / (31 * 24 * 60 * 60 * 1000)) + " months ago";
-	// } else {
-	// 	div.innerText = Math.floor(difference / (31 * 24 * 60 * 60 * 1000)) + " years ago";
-	// }
 }
 
 
@@ -299,12 +274,22 @@ async function getIpfsNode(): Promise<IpfsNode> {
 		console.log("using native node");
 		IS_NATIVE_NODE = true;
 		return node;
-	} catch (err) {
-		const node = await (window as any).Ipfs.create();
-		console.log("using browser node");
-		IS_NATIVE_NODE = false;
+	} catch (err) {}
+
+	try {
+		const node: any = IpfsHttpClient({ host: 'localhost', port: 5001, protocol: "http" });
+		// try to access the node
+		await node.stats.bitswap();
+		console.log("using local http node");
 		return node;
+	}catch (err) {
+		console.log("error initializing http node:", err);
 	}
+	
+	const node = await (window as any).Ipfs.create();
+	console.log("using browser node");
+	IS_NATIVE_NODE = false;
+	return node;
 }
 
 (async () => {
@@ -364,7 +349,6 @@ async function getIpfsNode(): Promise<IpfsNode> {
 	const id = document.getElementById("text");
 
 	const container = document.getElementById("container") as HTMLElement;
-
 	const l = win.location;
 	const url = l.protocol + "//" + l.host + "/thread";//custom.url;
 	let remotePeerAddress;
