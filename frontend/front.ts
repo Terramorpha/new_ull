@@ -190,7 +190,12 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		const preTag = document.createElement("pre");
 		tag.appendChild(preTag);
 		const hljs = (window as any).hljs;
-		preTag.innerHTML = hljs.highlight( i.data.language ? i.data.language:"plaintext", i.data.content).value;
+		try {
+			preTag.innerHTML = hljs.highlight( i.data.language ? i.data.language:"plaintext", i.data.content).value;
+		}catch (err) {
+			console.log("err:", err);
+			preTag.innerHTML = hljs.highlight("plaintext", i.data.content).value;
+		}
 		//}
 		return tag;
 	} else if (gitem.type === Ull.InlineCodeItem.type_name) {
