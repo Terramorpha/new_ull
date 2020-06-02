@@ -42,14 +42,15 @@ module Settings {
 		previewMessageOnLinkHover: boolean;
 		relativeTimeStamp: boolean;
 		compactView: boolean;
+		appendTimeStamp: boolean;
 		constructor() {
 			this.prependDefaultTripcode = true;
 			this.previewMessageOnLinkHover = true;
 			this.defaultTripcode = generateID();
 			this.relativeTimeStamp = true;
 			this.compactView = false;
+			this.appendTimeStamp = true;
 		}
-		
 	}
 
 	function fixSettingStore(s:SettingStore) {

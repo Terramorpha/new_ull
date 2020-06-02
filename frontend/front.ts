@@ -96,9 +96,12 @@ function createBase64Uri(ar: ArrayBuffer): string {
 }
 
 function addMetadata(items: Ull.Item[], settings: Settings.SettingStore): Ull.Item[] {
-	const now = Date.now();
-	const new_item = new Ull.TimeStampItem(now);
-	items.push(new_item);
+	if (settings.appendTimeStamp) {
+		const now = Date.now();
+		const new_item = new Ull.TimeStampItem(now);
+		items.push(new_item);
+	}
+	
 	const types = items.map(item => item.type);
 	if (!(contains(types, Ull.TripCodeItem.type_name))) {
 		if (settings.prependDefaultTripcode) {
