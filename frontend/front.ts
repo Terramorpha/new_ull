@@ -1,7 +1,6 @@
-
-
 declare var MediaRecorder: any;
 declare var IpfsHttpClient: any;
+declare var MathJax: any;
 
 let IS_NATIVE_NODE = false;
 let IS_READONLY = false;
@@ -263,6 +262,9 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		p.classList.add("quote");
 		p.innerText = quotedText;
 		return p;
+	} else if (gitem.type === Ull.MathItem.type_name) {
+		const item: Ull.MathItem = gitem;
+		return MathJax.tex2svg(item.data);
 	} else {
 		console.warn("received unknown item type:", gitem.type);
 		const d = document.createElement("div");

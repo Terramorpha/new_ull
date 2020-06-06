@@ -64,6 +64,15 @@ module Ull {
 		}
 	}
 
+	export class MathItem implements Item {
+		static type_name: string = "math_block";
+		type: string = "math_block";
+		data: string;
+		constructor(text: string) {
+			this.data = text;
+		}
+	}
+	
 	export class InlineCodeItem implements Item {
 		static type_name: string = "inline_code_block";
 		type: string = "inline_code_block";
@@ -188,7 +197,12 @@ module Ull {
 				}
 			}
 		},
-
+		{//math blocks
+			pattern: /\[math\]([\s\S]*?)\[\/math\]/,
+			parse(match: RegExpMatchArray): Item {
+				return new MathItem(match[1]);
+			}
+		},
 		{//links
 			pattern: />>(\S+)/,
 			parse(match: RegExpMatchArray): Item {

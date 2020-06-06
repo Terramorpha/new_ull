@@ -351,6 +351,14 @@ img {
 }
 
 
+
+svg > g, 
+svg > g { 
+	fill: var(--text-color); 
+	stroke: var(--text-color);
+}
+
+
 /* syntax highlighting     */
 /*
 Monokai style - ported by Luigi Maselli - http://grigio.org
