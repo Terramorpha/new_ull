@@ -34,7 +34,7 @@
 }
 
 .message_image {
-	float: left;
+	/* float: left; */
 	margin: 1em;
 	width: 20em
 }
