@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	ipfs "github.com/ipfs/go-ipfs-api"
+	"io"
+	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
@@ -24,7 +26,7 @@ var Config = struct {
 	KeyFile      string
 	HashFile     string
 	TripCodeSalt string
-	ApiPath string
+	ApiPath      string
 }{}
 
 func init() {
@@ -136,6 +138,9 @@ func main() {
 		return nil
 	})
 
+	ll.AddFilter(filterMIMEType("image", "image", sh))
+	ll.AddFilter(filterMIMEType("audio", "audio", sh))
+
 	fileServer := http.FileServer(http.Dir("./"))
 
 	http.HandleFunc("/thread", CORSWrapper(ll.Handler()))
@@ -186,4 +191,31 @@ func serve(w http.ResponseWriter, r *http.Request) {
 	}
 	defer f.Close()
 	http.ServeContent(w, r, path.Base(r.URL.Path), stat.ModTime(), f)
+}
+
+func filterMIMEType(typeString string, mimeTypePrefix string, sh *ipfs.Shell) Filter {
+	return func(items *[]Item) error {
+		for i := range *items {
+			v := (*items)[i]
+			if v.Type == typeString {
+				hash := v.Data.(map[string]interface{})["/"].(string)
+				reader, err := sh.Cat(hash)
+				if err != nil {
+					return errors.New("invalid image hash")
+				}
+
+				bs, err := ioutil.ReadAll(&io.LimitedReader{R: reader, N: 512})
+				if err != nil {
+					return errors.New("invalid hash image")
+				}
+
+				t := http.DetectContentType(bs)
+				fmt.Printf("t: %#+v\n", t)
+				if !strings.HasPrefix(t, mimeTypePrefix) {
+					return fmt.Errorf("hash %s should point to data of type %s, but points to %s content", hash, mimeTypePrefix, t)
+				}
+			}
+		}
+		return nil
+	}
 }

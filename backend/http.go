@@ -45,7 +45,7 @@ func (n Node) json() string {
 //173.178.130.146
 var YourIp = "/dns/terramorpha.tech/tcp/4001"
 
-const kind = "dag-cbor"
+const EncodingKind = "dag-cbor"
 
 type LinkedList struct {
 	hashFile string
@@ -149,8 +149,6 @@ func (ll *LinkedList) Handler() func(w http.ResponseWriter, r *http.Request) {
 			}
 
 		case "POST":
-			m.Lock()
-			defer m.Unlock()
 			dec := json.NewDecoder(r.Body)
 			content := []Item{}
 			dec.Decode(&content)
@@ -171,9 +169,11 @@ func (ll *LinkedList) Handler() func(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+			m.Lock()
+			defer m.Unlock()
 
 			//put in dag the list
-			itemsHash, err := ll.shell.DagPut(toJson(content), "json", kind)
+			itemsHash, err := ll.shell.DagPut(toJson(content), "json", EncodingKind)
 			if err != nil {
 				panic(err)
 			}
@@ -186,7 +186,7 @@ func (ll *LinkedList) Handler() func(w http.ResponseWriter, r *http.Request) {
 			o := Node{
 				Items: Link{Cid: itemsHash}, Next: next,
 			}
-			h, err := ll.shell.DagPut(o.json(), "json", kind)
+			h, err := ll.shell.DagPut(o.json(), "json", EncodingKind)
 			if err != nil {
 				panic(err)
 			}
@@ -203,14 +203,18 @@ func (ll *LinkedList) Handler() func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+
+// Filter is a function type used to modify a received MessageItem List
+// arbitrarily.
+type Filter func(items *[]Item) error
+
 // AddFilter is used to deny certain messages
 //
 // It takes a predicate that will analyse all the items in the message and
 // return an error if this message is incorrect.
 //
 // This function can be chained
-func (ll *LinkedList) AddFilter(filter func(items *[]Item) error) *LinkedList {
+func (ll *LinkedList) AddFilter(filter Filter) *LinkedList {
 	ll.filters = append(ll.filters, filter)
 	return ll
-
 }
