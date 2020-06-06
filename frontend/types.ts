@@ -166,6 +166,12 @@ module Ull {
 	}
 	
 	export const parsers: Parser[] = [
+		{
+			pattern: /raw`([\s\S]*?)`war/,
+			parse(match: RegExpMatchArray): Item {
+				return new CodeItem(match[1]);
+			}
+		},
 		{//raw text between ``
 			pattern: /`([\s\S]*?)`/, //`(asdfasdfasd)`
 			parse(match: RegExpMatchArray): Item {
