@@ -48,7 +48,7 @@ async function getListNodeFromHash(ipfsnode: IpfsNode, hash: Ipfs.CID): Promise<
 	return new ListNode(value.value.next ? createCidFromForeignCid(value.value.next):null, createCidFromForeignCid(value.value.items));
 }
 
-function filterItems(items: Ull.Item[], view: MessageView): Ull.Item[] {
+function filterItems(items: Ull.Item[], view: MessageView, interactive: boolean): Ull.Item[] {
 	let o: Ull.Item[] = [];
 	for (let i = 0; i < items.length; i++) {
 		const item = items[i];
@@ -70,15 +70,16 @@ function filterItems(items: Ull.Item[], view: MessageView): Ull.Item[] {
 			}
 			
 			if (failed) {
-				alert( c.data["/"] +  " is not a valid hash" );
+				if (interactive) alert( c.data["/"] +  " is not a valid hash" );
 				return [];
 			}
 		}
 		if (item.type === Ull.LinkItem.type_name) {
 			const val = view.msgReferences.map[item.data["/"]];
 			if (!val) {
-				if (!confirm("link " + item.data + " is foreign or invalid. Continue ?"))
-					return [];
+				if (interactive)
+					if (!confirm("link " + item.data + " is foreign or invalid. Continue ?"))
+						return [];
 			}
 		}
 		o.push(item);
@@ -378,7 +379,7 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 	const update = () => {
 		if (previewElem)
 			previewElem.remove();
-		let messages = filterItems(Ull.extract(post.text.value), messageView);
+		let messages = filterItems(Ull.extract(post.text.value), messageView, false);
 		if (messages.length === 0) return;
 		messages = addMetadata(messages, settings);
 		const elem = messageView.render("unknown", messages, ipfs);
@@ -447,7 +448,7 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 
 
 	post.send.addEventListener("click", async () => {
-		let messages: Ull.Item[] = filterItems(Ull.extract(post.text.value), messageView);
+		let messages: Ull.Item[] = filterItems(Ull.extract(post.text.value), messageView, true);
 		if (messages.length === 0) return;
 		messages = addMetadata(messages, settings);
 		const body = JSON.stringify(messages, (k, v) => v);
