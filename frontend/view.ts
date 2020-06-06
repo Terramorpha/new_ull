@@ -128,8 +128,9 @@ function newIpfsAudio(hash: Ipfs.CID, ipfsNode: IpfsNode): HTMLAudioElement {
 	const au = document.createElement("audio") as HTMLAudioElement;
 	au.setAttribute("controls", "");
 	au.setAttribute("hash", hash.toString());
-	ipfsNode.cat(hash).then((u8array: Uint8Array) => {
-		const blob = new Blob([u8array.buffer]);
+
+	catIpfs(hash, ipfsNode).then((u8arrays: Uint8Array[]) => {
+		const blob = new Blob(u8arrays);
 		const uri = URL.createObjectURL(blob)
 		au.src = uri;
 	});
