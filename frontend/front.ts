@@ -273,7 +273,7 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 }
 
 
-async function getIpfsNode(): Promise<IpfsNode> {
+async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 	const win = (window as any);
 
 	const ipfs = win.ipfs;
@@ -302,7 +302,7 @@ async function getIpfsNode(): Promise<IpfsNode> {
 
 (async () => {
 	const win = window;
-	const ipfs = await getIpfsNode();
+	const ipfs = await getIpfsNode(settings);
 	(window as any).ipfsnode = ipfs;
 	{
 		const record = document.getElementById("record");
