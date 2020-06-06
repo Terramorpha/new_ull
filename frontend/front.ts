@@ -310,47 +310,51 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 		let stream: MediaStream;
 		let recorder;
 		const chunks = [];
-		record.addEventListener('click', async () => {
-			if (state === "idle") {
-				if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-					console.log("recording supported");
-				}
-				else console.log("recording not supported");
-				stream = await navigator.mediaDevices.getUserMedia({
-					audio: true,
-					video: false
-				});
-				const opts = {
-					mimeType: "audio/mp3"
-				};
-				recorder = new MediaRecorder(stream);
-				recorder.start();
-				recorder.addEventListener("dataavailable", async (e) => {
-					chunks.push(e.data);
-				});
-				record.innerText = "🔴 Recording";
-				state = "recording";
-			} else if (state === "recording") {
-				recorder.onstop = async () => {
-					record.innerText = "Record";
-					stream.getTracks().forEach((tr) => { tr.stop() });
-					stream = null;
-					recorder = null;
-					state = "idle";
-					const blob = new Blob(chunks);
-					const ar = await new Response(blob).arrayBuffer();
-					let hashes;
-					try {
-						hashes = await ipfs.add(ar);
-						const hash = hashes[0].hash;
-						post.text.value += "[["+ hash +"][audio]]";
-					} catch (err) {
-						console.error("couldn't add audio to ipfs:", err);
+		if (IS_NATIVE_NODE) {
+			record.addEventListener('click', async () => {
+				if (state === "idle") {
+					if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+						console.log("recording supported");
 					}
-				};
-				recorder.stop();
-			}
-		});
+					else console.log("recording not supported");
+					stream = await navigator.mediaDevices.getUserMedia({
+						audio: true,
+						video: false
+					});
+					const opts = {
+						mimeType: "audio/mp3"
+					};
+					recorder = new MediaRecorder(stream);
+					recorder.start();
+					recorder.addEventListener("dataavailable", async (e) => {
+						chunks.push(e.data);
+					});
+					record.innerText = "🔴 Recording";
+					state = "recording";
+				} else if (state === "recording") {
+					recorder.onstop = async () => {
+						record.innerText = "Record";
+						stream.getTracks().forEach((tr) => { tr.stop() });
+						stream = null;
+						recorder = null;
+						state = "idle";
+						const blob = new Blob(chunks);
+						const ar = await new Response(blob).arrayBuffer();
+						let hashes;
+						try {
+							hashes = await ipfs.add(ar);
+							const hash = hashes[0].hash;
+							post.text.value += "[["+ hash +"][audio]]";
+						} catch (err) {
+							console.error("couldn't add audio to ipfs:", err);
+						}
+					};
+					recorder.stop();
+				}
+			});
+		}else {
+			record.remove();
+		}
 	}
 
 
