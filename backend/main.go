@@ -120,7 +120,7 @@ func main() {
 		for i := range *items {
 			val := &(*items)[i]
 			if val.Type == "tripcode" {
-				log.Printf("%#+v\n", val)
+				//log.Printf("%#+v\n", val)
 				str, ok := val.Data.(string)
 				if !ok {
 					panic(fmt.Sprintf("could not turn %#+v into string", val.Data))
@@ -129,7 +129,7 @@ func main() {
 				hashStr := hex.EncodeToString(bs[:])
 				val.Data = hashStr
 
-				log.Printf("%#+v\n", val)
+				//log.Printf("%#+v\n", val)
 				//tripcode, ok :=
 			}
 
@@ -210,7 +210,7 @@ func filterMIMEType(typeString string, mimeTypePrefix string, sh *ipfs.Shell) Fi
 				}
 
 				t := http.DetectContentType(bs)
-				fmt.Printf("t: %#+v\n", t)
+				// fmt.Printf("t: %#+v\n", t)
 				if !strings.HasPrefix(t, mimeTypePrefix) {
 					return fmt.Errorf("hash %s should point to data of type %s, but points to %s content", hash, mimeTypePrefix, t)
 				}

@@ -50,7 +50,7 @@ module tripcode {
 	];
 	
 
-	//https://bitcoin.stackexchange.com/questions/52727/byte-array-to-hexadecimal-and-back-again-in-javascript
+	// https://bitcoin.stackexchange.com/questions/52727/byte-array-to-hexadecimal-and-back-again-in-javascript
 	function toHexString(byteArray) {
 		return Array.prototype.map.call(byteArray, function(byte) {
 			return ('0' + (byte & 0xFF).toString(16)).slice(-2);
