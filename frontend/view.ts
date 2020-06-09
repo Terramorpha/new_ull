@@ -52,7 +52,7 @@ function newLink(toHash: string, fromHash: string, map: ReferenceMap, previewMes
 /**
  * create a blue link
  *
- * @param toHash the hash the link 
+ * @param toHash the hash the link
  */
 function newBackLink(toHash: string, settings: Settings.SettingStore): HTMLElement {
 	const elem = document.createElement("a");
@@ -101,18 +101,15 @@ function newIpfsImage(hash: Ipfs.CID, ipfsNode: IpfsNode): HTMLElement {
 		img.src = uri;
 	})
 
-
 	const a = document.createElement("a") as HTMLAnchorElement;
 	a.href = "javascript:void(0)";//gateway + item.data;
 	a.appendChild(img);
 	a.addEventListener("click", () => {
-		if (img.classList.contains("message_image_full")) {
-			img.classList.remove("message_image_full");
-			a.style.display = null;
-		}else {
-			img.classList.add("message_image_full");
-			a.style.display = "block";
-		}
+			const imageOverlayContainer = document.getElementById('image_overlay_container');
+			const imageOverlay = document.getElementById('image_overlay');
+
+			imageOverlay.style.backgroundImage = "url(" + img.src + ")";
+			imageOverlayContainer.classList.add('active');
 	})
 
 	return a;
@@ -223,7 +220,7 @@ function handleMouseOver(a: HTMLElement, hash: string) {
 	});
 }
 
-/** 
+/**
  * this is a higher order function: it returns a function that, when called, will
  * scroll up a thread to the message with the specified hash and highlight it for a
  * second. It will also highlight the backlink to the fromHash message
@@ -243,7 +240,7 @@ function followThreadUp(hash: string, fromHash: string, map: ReferenceMap) {
 			sleep(highlight_sleep_time).then(() => {
 				e.classList.remove("selected");
 			});
-		
+
 		} else {
 			const u = new URL(window.location.href);
 			u.search = "";
@@ -254,10 +251,10 @@ function followThreadUp(hash: string, fromHash: string, map: ReferenceMap) {
 	};
 }
 
-/** 
+/**
  * this is a higher order function: it returns a function that, when called, wil
  * scroll back to the message with the specified hash and highlight it for a
- * second.   
+ * second.
  */
 function followThreadDown(backToHash: string) {
 	return () => {
@@ -328,7 +325,7 @@ function newTripCodeFromHash(hash: string): HTMLElement {
 	const elem = document.createElement("div");
 	spans.forEach((span) => elem.appendChild(span));
 	elem.classList.add("tripcode");
-	return elem;	
+	return elem;
 }
 
 class MessageView {
@@ -341,7 +338,7 @@ class MessageView {
 		this.msgReferences = new ReferenceMap();
 		this.settings = store;
 	}
-	
+
 	/**
 	 * Update the dom by displaying the messages in the specified container div
 	 *
@@ -353,12 +350,12 @@ class MessageView {
 		while (topHash && !contains(this.hashes, topHash.toString())) {
 			this.hashes.push(topHash.toString());
 			const val = await getListNodeFromHash(ipfs, topHash);
-			
+
 			const bigNode = document.createElement("div");
 			bigNode.classList.add("big_node");
 			if (this.settings.compactView)
 				bigNode.classList.add("medium_container");
-			
+
 			// fix this, nodes must be accessible
 			container.prepend(bigNode);
 			const thisHash = topHash;
@@ -371,13 +368,13 @@ class MessageView {
 	}
 
 	render(hash: string, items: Ull.Item[], ipfs: IpfsNode): HTMLElement {
-		
+
 		// a div to put all the blue links in
 		const references = document.createElement("div");
 		// and give it to the blue links manager
 		//TODO: this creates garbage
 		this.msgReferences.get(hash).setElement(references, this.settings);
-		
+
 		let tripcodes = document.createElement("div");
 		tripcodes.classList.add("tripcode_container");
 		const elem = newMessageBox(hash, references, tripcodes);
@@ -394,7 +391,7 @@ class MessageView {
 				const hashString = createCidFromForeignCid(link.data);
 				const ref = this.msgReferences.get(hashString.toString());
 				ref.addRef(hash, this.settings);
-				
+
 			}
 
 			elem.appendChild(itemToTag(item, ipfs, hash, this.msgReferences, this.settings));
@@ -402,6 +399,3 @@ class MessageView {
 		return elem;
 	}
 }
-
-
-

@@ -46,6 +46,36 @@
 	float: none;
 }
 
+#image_overlay_container {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 3em;
+	width: 100%;
+	height: 100%;
+	position: fixed;
+	top: 0;
+	left: 0;
+	background: rgba(0, 0, 0, .75);
+	pointer-events: none;
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity .25s ease-in-out;
+}
+
+#image_overlay {
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+	background-repeat: no-repeat;
+	background-size: contain;
+	background-position: center;
+}
+
+#image_overlay_container.active {
+	pointer-events: all;
+	opacity: 1;
+}
+
 p {
 	display: inline;
 }
@@ -76,7 +106,7 @@ p {
 	overflow-y: autohidden;
 	overflow-x: hidden;
 	flex: 1 1 auto;
-	
+
 }
 
 /* the nodes are inside, they must be inline-block */
@@ -277,7 +307,7 @@ img {
 }
 
 .selected_backlink {
-	color: var(--selected-backlink-color);	
+	color: var(--selected-backlink-color);
 }
 
 @media only screen and (max-device-width: 1000px) {
@@ -352,9 +382,9 @@ img {
 
 
 
-svg > g, 
-svg > g { 
-	fill: var(--text-color); 
+svg > g,
+svg > g {
+	fill: var(--text-color);
 	stroke: var(--text-color);
 }
 
