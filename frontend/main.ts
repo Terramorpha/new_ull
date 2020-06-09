@@ -364,7 +364,7 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 	const id = document.getElementById("text");
 
 	const container = document.getElementById("container") as HTMLElement;
-	const imageOverlayContainer = document.getElementById('image_overlay_container');
+	const imageOverlayContainer = document.getElementById("image_overlay_container");
 	const l = win.location;
 	const url = l.protocol + "//" + l.host + "/thread";//custom.url;
 	let remotePeerAddress;
@@ -443,7 +443,7 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 
 
 	imageOverlayContainer.addEventListener("click", () => {
-		imageOverlayContainer.classList.remove('active');
+		imageOverlayContainer.classList.remove("active");
 	});
 
 	post.text.addEventListener("keyup", (k) => {

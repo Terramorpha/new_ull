@@ -106,10 +106,10 @@ function newIpfsImage(hash: Ipfs.CID, ipfsNode: IpfsNode, settings: Settings.Set
 	a.appendChild(img);
 	a.addEventListener("click", () => {
 		if (settings.enableImageOverlay) {
-			const imageOverlayContainer = document.getElementById('image_overlay_container');
-			const imageOverlay = document.getElementById('image_overlay');
-			imageOverlay.style.backgroundImage = "url(" + img.src + ")";
-			imageOverlayContainer.classList.add('active');
+			const imageOverlayContainer = document.getElementById("image_overlay_container");
+			const imageOverlay = document.getElementById("image_overlay") as HTMLImageElement;
+			imageOverlay.src = img.src;
+			imageOverlayContainer.classList.add("active");
 		} else {
 			if (img.classList.contains("message_image_full")) {
 				img.classList.remove("message_image_full");
