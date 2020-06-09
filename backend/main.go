@@ -21,24 +21,26 @@ import (
 
 var Config = struct {
 	BindAddress  string
-	IsHttps      bool
+	IsHTTPS      bool
 	CertFile     string
 	KeyFile      string
 	HashFile     string
 	TripCodeSalt string
-	ApiPath      string
+	APIPath      string
+	FrontendPath string
 }{}
 
 func init() {
-
+	flag.StringVar(&Config.FrontendPath, "path", "./frontend", "the static content's path")
 	flag.StringVar(&Config.BindAddress, "port", ":8000", "the address to bind to")
-	flag.BoolVar(&Config.IsHttps, "https", true, "wether to use https or not")
-	flag.StringVar(&Config.CertFile, "certfile", "/home/terramorpha/keys/fullchain.pem", "the fullchain.pem file to use")
-	flag.StringVar(&Config.KeyFile, "keyfile", "/home/terramorpha/keys/privkey.pem", "the privkey.pem file to use")
+	flag.BoolVar(&Config.IsHTTPS, "https", false, "wether to use https or not")
+	flag.StringVar(&Config.CertFile, "certfile", "", "the fullchain.pem file to use")
+	flag.StringVar(&Config.KeyFile, "keyfile", "", "the privkey.pem file to use")
 	flag.StringVar(&Config.HashFile, "hashfile", "hash", "the file in which to store all message hashes")
 	flag.StringVar(&Config.TripCodeSalt, "salt", "", "the salt to use for creating TripCodes")
-	flag.StringVar(&Config.ApiPath, "api", "/ip4/127.0.0.1/tcp/5001", "the ipfs api's address")
+	flag.StringVar(&Config.APIPath, "api", "/ip4/127.0.0.1/tcp/5001", "the ipfs api's address")
 	flag.Parse()
+	
 	if Config.TripCodeSalt == "" {
 		log.Fatal("tripcode salt must not be empty")
 	}
@@ -84,12 +86,12 @@ func CORSWrapper(f func(http.ResponseWriter, *http.Request)) func(w http.Respons
 
 func main() {
 	YourIp = "/ip4/173.178.130.146/tcp/4001"
-	sh := ipfs.NewShell(Config.ApiPath)
+	sh := ipfs.NewShell(Config.APIPath)
 	if sh == nil {
 		panic("couldn't create local shell handle")
 	}
 
-	ll := NewLinkedList(sh, "hash")
+	ll := NewLinkedList(sh, Config.HashFile)
 
 	ll.AddFilter(func(items *[]Item) error {
 		for _, v := range *items {
@@ -141,7 +143,7 @@ func main() {
 	ll.AddFilter(filterMIMEType("image", "image", sh))
 	ll.AddFilter(filterMIMEType("audio", "audio", sh))
 
-	fileServer := http.FileServer(http.Dir("./"))
+	fileServer := http.FileServer(http.Dir(Config.FrontendPath))
 
 	http.HandleFunc("/thread", CORSWrapper(ll.Handler()))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -151,7 +153,7 @@ func main() {
 
 	//err := http.ListenAndServe(Config.BindAddress, nil)
 
-	if Config.IsHttps {
+	if Config.IsHTTPS {
 		log.Println("using https")
 		err := http.ListenAndServeTLS(Config.BindAddress, Config.CertFile, Config.KeyFile, nil)
 		if err != nil {

@@ -1,4 +1,6 @@
-all: build_front build_back run
+all: build run
+
+build: build_front build_back
 
 build_front:
 	cd frontend;tsc --inlineSourceMap --module none --lib ES2018,dom settings.ts utils.ts types.ts view.ts tree_render.ts tripcode.ts lazy.ts main.ts --outFile front.js
@@ -8,4 +10,4 @@ build_back:
 	go build -o bin backend/*.go
 
 run:
-	cd frontend; ../bin -port :1337 -salt "$(shell cat salt.txt)"
+	./bin -port -salt "$(shell cat salt.txt)"
