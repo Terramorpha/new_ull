@@ -170,7 +170,7 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		return div;
 	} else if (gitem.type === Ull.ImageItem.type_name) {
 		const item: Ull.ImageItem = gitem;
-		return newIpfsImage(createCidFromForeignCid(item.data), node);
+		return newIpfsImage(createCidFromForeignCid(item.data), node, settings);
 
 	} else if (gitem.type === Ull.LinkItem.type_name) {
 		const item: Ull.LinkItem = gitem;

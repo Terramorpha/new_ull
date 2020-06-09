@@ -55,11 +55,11 @@
 	position: fixed;
 	top: 0;
 	left: 0;
-	background: rgba(0, 0, 0, .75);
+	background: rgba(0, 0, 0, .85);
 	pointer-events: none;
 	cursor: pointer;
 	opacity: 0;
-	transition: opacity .25s ease-in-out;
+	transition: opacity .125s ease-in-out;
 }
 
 #image_overlay {

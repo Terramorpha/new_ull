@@ -89,7 +89,7 @@ async function catIpfs(hash: Ipfs.CID , ipfsNode: IpfsNode): Promise<any[]> {
  * @param hash the hash to the video file
  * @param ipfsNode the node
  */
-function newIpfsImage(hash: Ipfs.CID, ipfsNode: IpfsNode): HTMLElement {
+function newIpfsImage(hash: Ipfs.CID, ipfsNode: IpfsNode, settings: Settings.SettingStore): HTMLElement {
 
 	const img = document.createElement("img");
 	img.classList.add("message_image");
@@ -105,12 +105,21 @@ function newIpfsImage(hash: Ipfs.CID, ipfsNode: IpfsNode): HTMLElement {
 	a.href = "javascript:void(0)";//gateway + item.data;
 	a.appendChild(img);
 	a.addEventListener("click", () => {
+		if (settings.enableImageOverlay) {
 			const imageOverlayContainer = document.getElementById('image_overlay_container');
 			const imageOverlay = document.getElementById('image_overlay');
-
 			imageOverlay.style.backgroundImage = "url(" + img.src + ")";
 			imageOverlayContainer.classList.add('active');
-	})
+		} else {
+			if (img.classList.contains("message_image_full")) {
+				img.classList.remove("message_image_full");
+				a.style.display = null;
+			} else {
+				img.classList.add("message_image_full");
+				a.style.display = "block";
+			}
+		}
+	});
 
 	return a;
 }
