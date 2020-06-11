@@ -16,7 +16,8 @@ const post = {
 	text: document.getElementById("post_text") as HTMLTextAreaElement,
 };
 const settings = Settings.getSettingStore();
-
+const URL_MATHJAX = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js";
+const URL_HIGHLIGHT = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/highlight.min.js";
 class ListNode {
 	next: Ipfs.CID | null;
 	items: Ipfs.CID;
@@ -153,7 +154,7 @@ function relativeTimeDifference(difference:number) {
 }
 
 
-function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:ReferenceMap, settings: Settings.SettingStore): HTMLElement {
+async function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:ReferenceMap, settings: Settings.SettingStore): Promise<HTMLElement> {
 	if (gitem.type === Ull.TextItem.type_name) {
 		const item: Ull.TextItem = gitem;
 		const p = document.createElement("p");
@@ -184,17 +185,23 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		return link;
 	} else if (gitem.type === Ull.CodeItem.type_name) {
 		const item: Ull.CodeItem = gitem;
-		const i = item as Ull.CodeItem;
 		const tag = document.createElement("div");
 		tag.classList.add("code");
 		const preTag = document.createElement("pre");
 		tag.appendChild(preTag);
+		await Lazy.load(URL_HIGHLIGHT);		
 		const hljs = (window as any).hljs;
 		try {
-			preTag.innerHTML = hljs.highlight( i.data.language ? i.data.language:"plaintext", i.data.content).value;
+			if (item.data.language)	{
+				Lazy.load("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/languages/<language>.min.js".replace("<language>", item.data.language)).then(() => {
+					preTag.innerHTML = hljs.highlight(item.data.language, item.data.content).value;
+				})
+			} else {
+				preTag.innerHTML = hljs.highlight( item.data.language ? item.data.language:"plaintext", item.data.content).value;
+			}
 		}catch (err) {
 			console.log("err:", err);
-			preTag.innerHTML = hljs.highlight("plaintext", i.data.content).value;
+			preTag.innerHTML = hljs.highlight("plaintext", item.data.content).value;
 		}
 		//}
 		return tag;
@@ -220,9 +227,6 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 			const date = new Date(item.data);
 			div.innerText = days[date.getDay()] + " " + date.toLocaleDateString() + " " + date.toLocaleTimeString();
 		}
-
-
-
 		return div;
 	}else if (gitem.type === Ull.GenericLinkItem.type_name){
 		const item: Ull.GenericLinkItem = gitem;
@@ -252,7 +256,6 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		const item: Ull.QuoteItem = gitem;
 		const text: string = item.data;
 		const list = text.split("\n");
-
 		if (list[list.length - 1] === ""){
 			list.pop();
 		}
@@ -263,8 +266,22 @@ function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, map:Ref
 		p.innerText = quotedText;
 		return p;
 	} else if (gitem.type === Ull.MathItem.type_name) {
+		
 		const item: Ull.MathItem = gitem;
-		return MathJax.tex2svg(item.data);
+		try {
+			const d = document.createElement("div");
+			Lazy.load(URL_MATHJAX).then(() => {
+			// console.log(MathJax);
+			const svg =  MathJax.tex2svg(item.data);
+				d.appendChild(svg);
+			});
+			return d;
+		} catch (err) {
+			console.log(err);
+			const d = document.createElement("div");
+			d.innerText = item.data;
+			return d;
+		}
 	} else {
 		console.warn("received unknown item type:", gitem.type);
 		const d = document.createElement("div");
@@ -379,13 +396,13 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 	const preview = document.getElementById("preview");
 	let previewOn = false;
 	let previewElem = null;
-	const update = () => {
+	const update = async () => {
 		if (previewElem)
 			previewElem.remove();
 		let messages = filterItems(Ull.extract(post.text.value), messageView, false);
 		if (messages.length === 0) return;
 		messages = addMetadata(messages, settings);
-		const elem = messageView.render("unknown", messages, ipfs);
+		const elem = await messageView.render("unknown", messages, ipfs);
 		const big = document.createElement("div");
 		elem.classList.add("message_preview");
 		big.classList.add("message_preview_background");
@@ -402,7 +419,7 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 		previewElem = big
 	}
 	const buttonInnerHTML = preview.innerHTML;
-	preview.addEventListener("click", () => {
+	preview.addEventListener("click", async () => {
 		if (previewOn) {
 			preview.innerHTML = buttonInnerHTML;
 			previewElem.remove()
@@ -411,7 +428,7 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 			previewOn = false;
 		}else{
 			preview.innerHTML = "Preview On"
-			update()
+			await update()
 			post.text.addEventListener("keyup", update);
 			previewOn = true;
 		}

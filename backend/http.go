@@ -65,7 +65,7 @@ func NewHashList(fileName string) *HashList {
 	o.file = nil
 	o.hashes = []string{}
 
-	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_APPEND, 0)
+	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		fmt.Println("couldn't open old hash file:", err)
 		return o

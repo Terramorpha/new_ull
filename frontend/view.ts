@@ -368,16 +368,16 @@ class MessageView {
 			// fix this, nodes must be accessible
 			container.prepend(bigNode);
 			const thisHash = topHash;
-			val.getItems(ipfs).then((items) => {
-				bigNode.appendChild(this.render(thisHash.toString(), items, ipfs));
+			val.getItems(ipfs).then(async (items) => {
+				bigNode.appendChild(await this.render(thisHash.toString(), items, ipfs));
 				// bigNode.appendChild(document.createElement("br"));
 			})
 			topHash = val.next;
 		}
 	}
 
-	render(hash: string, items: Ull.Item[], ipfs: IpfsNode): HTMLElement {
 
+	async render(hash: string, items: Ull.Item[], ipfs: IpfsNode): Promise<HTMLElement> {
 		// a div to put all the blue links in
 		const references = document.createElement("div");
 		// and give it to the blue links manager
@@ -391,19 +391,24 @@ class MessageView {
 
 		while (items[0].type == Ull.TripCodeItem.type_name && items.length != 0) {
 			const item: Ull.TripCodeItem = items.shift();
-			const t = itemToTag(item, ipfs, hash, this.msgReferences, this.settings);
+			const t = await itemToTag(item, ipfs, hash, this.msgReferences, this.settings);
 			tripcodes.appendChild(t);
 		}
-		items.forEach(item => {
-			if (item.type === Ull.LinkItem.type_name) {
-				const link: Ull.LinkItem = item;
+		const promises = items.map(async messageItem => {
+			if (messageItem.type === Ull.LinkItem.type_name) {
+				const link: Ull.LinkItem = messageItem;
 				const hashString = createCidFromForeignCid(link.data);
 				const ref = this.msgReferences.get(hashString.toString());
 				ref.addRef(hash, this.settings);
 
 			}
 
-			elem.appendChild(itemToTag(item, ipfs, hash, this.msgReferences, this.settings));
+			const item = await itemToTag(messageItem, ipfs, hash, this.msgReferences, this.settings);
+			return item;
+		});
+		const resolvedItems = await Promise.all(promises);
+		resolvedItems.forEach(resolvedItem => {
+			elem.appendChild(resolvedItem);
 		})
 		return elem;
 	}
