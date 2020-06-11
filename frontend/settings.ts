@@ -35,7 +35,7 @@ module Settings {
 		setCookie("id", new_id, 365);
 		return new_id;
 	}
-	
+
 	export class SettingStore {
 		prependDefaultTripcode: boolean;
 		defaultTripcode: string;
@@ -43,6 +43,7 @@ module Settings {
 		relativeTimeStamp: boolean;
 		compactView: boolean;
 		appendTimeStamp: boolean;
+		enableImageOverlay: boolean;
 		constructor() {
 			this.prependDefaultTripcode = true;
 			this.previewMessageOnLinkHover = true;
@@ -50,6 +51,7 @@ module Settings {
 			this.relativeTimeStamp = true;
 			this.compactView = false;
 			this.appendTimeStamp = true;
+			this.enableImageOverlay = true;
 		}
 	}
 
@@ -61,7 +63,7 @@ module Settings {
 				s[key] = comparedTo[key];
 		}
 	}
-	
+
 	export function getSettingStore(): SettingStore {
 		const base64encoded = getCookie("settings");
 		if (base64encoded == "") {
@@ -72,7 +74,7 @@ module Settings {
 		const json = atob(base64encoded);
 		const struct = JSON.parse(json);
 		fixSettingStore(struct);
-		return struct;		
+		return struct;
 	}
 
 	export function setSettingStore(s: SettingStore) {
@@ -80,5 +82,5 @@ module Settings {
 		const base64 = btoa(json);
 		setCookie("settings", base64, 365);
 	}
-	
+
 }

@@ -33,7 +33,7 @@ class ListNode {
 			return new ListNode(val.value.next, val.value.items);
 		}
 
-		
+
 	}
 	constructor(next: Ipfs.CID|null, items: Ipfs.CID) {
 		this.next = null;
@@ -68,7 +68,7 @@ function filterItems(items: Ull.Item[], view: MessageView, interactive: boolean)
 			}catch (err) {
 				failed = true;
 			}
-			
+
 			if (failed) {
 				if (interactive) alert( c.data["/"] +  " is not a valid hash" );
 				return [];
@@ -102,12 +102,12 @@ function addMetadata(items: Ull.Item[], settings: Settings.SettingStore): Ull.It
 		const new_item = new Ull.TimeStampItem(now);
 		items.push(new_item);
 	}
-	
+
 	const types = items.map(item => item.type);
 	if (!(contains(types, Ull.TripCodeItem.type_name))) {
 		if (settings.prependDefaultTripcode) {
 			const id = settings.defaultTripcode;
-			items.unshift(new Ull.TripCodeItem(id));	
+			items.unshift(new Ull.TripCodeItem(id));
 		}
 	}
 	return items;
@@ -171,7 +171,7 @@ async function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, m
 		return div;
 	} else if (gitem.type === Ull.ImageItem.type_name) {
 		const item: Ull.ImageItem = gitem;
-		return newIpfsImage(createCidFromForeignCid(item.data), node);
+		return newIpfsImage(createCidFromForeignCid(item.data), node, settings);
 
 	} else if (gitem.type === Ull.LinkItem.type_name) {
 		const item: Ull.LinkItem = gitem;
@@ -180,9 +180,9 @@ async function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, m
 		//console.log("item.data:::::", item.data);
 		const hash: Ipfs.CID = createCidFromForeignCid(item.data);
 		const hashString = hash.toString();
-	
+
 		const link = newLink(hashString, messageHash, map, settings.previewMessageOnLinkHover);
-		return link;	
+		return link;
 	} else if (gitem.type === Ull.CodeItem.type_name) {
 		const item: Ull.CodeItem = gitem;
 		const tag = document.createElement("div");
@@ -231,7 +231,7 @@ async function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, m
 	}else if (gitem.type === Ull.GenericLinkItem.type_name){
 		const item: Ull.GenericLinkItem = gitem;
 		const real_item: Ull.GenericLinkItem = item;
-		
+
 		const element = document.createElement("div");
 		element.classList.add("text");
 		element.classList.add("spoiler");
@@ -246,7 +246,7 @@ async function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, m
 			await sleep(2000);
 			if (hoveredon) return;
 			element.innerText = real_item.data.description;
-		});		
+		});
 		return element;
 	}else if (gitem.type === Ull.TripCodeItem.type_name) {
 		const item: Ull.TripCodeItem = gitem;
@@ -259,6 +259,7 @@ async function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, m
 		if (list[list.length - 1] === ""){
 			list.pop();
 		}
+
 		const quotedText = list.map(s => "> " + s).join("\n");
 		const p = document.createElement("p");
 		p.classList.add("quote");
@@ -312,7 +313,7 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 	}catch (err) {
 		console.log("error initializing http node:", err);
 	}
-	
+
 	const node = await (window as any).Ipfs.create();
 	console.log("using browser node");
 	IS_NATIVE_NODE = false;
@@ -380,6 +381,7 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 	const id = document.getElementById("text");
 
 	const container = document.getElementById("container") as HTMLElement;
+	const imageOverlayContainer = document.getElementById("image_overlay_container");
 	const l = win.location;
 	const url = l.protocol + "//" + l.host + "/thread";//custom.url;
 	let remotePeerAddress;
@@ -431,7 +433,7 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 			previewOn = true;
 		}
 	})
-	
+
 	if (reqHash) {
 		if (post_container) {
 			post_container.hidden = true;
@@ -457,6 +459,9 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 	}
 
 
+	imageOverlayContainer.addEventListener("click", () => {
+		imageOverlayContainer.classList.remove("active");
+	});
 
 	post.text.addEventListener("keyup", (k) => {
 		if (k.ctrlKey && k.keyCode == 13) {
