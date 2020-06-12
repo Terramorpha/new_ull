@@ -10,4 +10,4 @@ build_back:
 	go build -o bin backend/*.go
 
 run:
-	./bin -port :8000 -salt "$(shell cat salt.txt)"
+	./bin -port :8000 -salt "marmelade"

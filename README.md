@@ -6,6 +6,18 @@ hosted with [IPFS](https://ipfs.io/).
 Because of the way IPFS works, once threads are created, they will exist for as
 long as someone is hosting them.
 
+## Running an instance
+
+To run an instance, you will need three things:
+
+1. An ipfs node
+2. The typescript compiler
+3. a relatively recent golang compiler
+
+Then, running it is a matte of typing `make build && make run`. However, this
+method will use the default string (`marmelade`) for salting the tripcodes If
+you want to achieve better security, you will need to use another salt.
+
 ## How it works
 
 Each thread is an [IPLD](https://ipld.io/) linked list-like data structure with
