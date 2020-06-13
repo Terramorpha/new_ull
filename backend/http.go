@@ -114,6 +114,8 @@ func (ll *LinkedList) Handler() func(w http.ResponseWriter, r *http.Request) {
 	hashList := NewHashList(ll.hashFile)
 
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		w.Header().Add("Content-Type", "application/json")
 		switch r.Method {
 		case "GET":
 			m.RLock()
