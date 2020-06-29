@@ -57,7 +57,7 @@ function newLink(toHash: string, fromHash: string, map: ReferenceMap, previewMes
 function newBackLink(toHash: string, settings: Settings.SettingStore): HTMLElement {
 	const elem = document.createElement("a");
 	elem.href = "javascript:void(0)";
-	if (settings.previewMessageOnLinkHover)
+	if (settings.previewMessageOnLinkHover.value)
 		handleMouseOver(elem, toHash);
 
 	const ft = followThreadDown(toHash);

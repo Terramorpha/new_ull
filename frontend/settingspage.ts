@@ -6,41 +6,22 @@ const container = document.getElementById("container");
 
 
 const settings = Settings.getSettingStore();
-function objectToTag(obj: any, container: HTMLElement) {
-	for (let key in obj) {
+
+function renderSettings(settings: Settings.SettingStore, container: HTMLElement) {
+	for (const key in settings) {
 		const div = document.createElement("div");
 		const p = document.createElement("p");
-		p.innerText = key;
+		p.innerText = settings[key].description;
 		div.appendChild(p);
+		div.appendChild(document.createElement("br"));
 		div.classList.add("settingcell");
-		const val = obj[key];
-		if (typeof(val) == "string") {
-			const textbox = document.createElement("input");
-			textbox.value = val;
-			div.appendChild(textbox);
-			textbox.addEventListener("keyup", () => {
-				obj[key] = textbox.value;
-			});
-		}else if (typeof(val) == "boolean") {
-			const checkbox = document.createElement("input");
-			checkbox.checked = val;
-			checkbox.type = "checkbox";
-			checkbox.addEventListener("click", () => {
-				settings[key] = checkbox.checked;
-			});
-			div.appendChild(checkbox);
-		}else if (typeof(val) == "number") {
-			const n = document.createElement("input");
-			n.type = "number";
-			n.value = val as any;
-			div.appendChild(n);
-		}
-		container.appendChild(div);
+		div.appendChild(settings[key].toDomElement());
+		container.appendChild(div);		
 	}
 }
 
-objectToTag(settings, container);
 
+renderSettings(settings, container);
 const savebutton = document.getElementById("savebutton");
 savebutton.addEventListener("click", () => {
 	console.log(settings);

@@ -97,7 +97,7 @@ function createBase64Uri(ar: ArrayBuffer): string {
 }
 
 function addMetadata(items: Ull.Item[], settings: Settings.SettingStore): Ull.Item[] {
-	if (settings.appendTimeStamp) {
+	if (settings.appendTimeStamp.value) {
 		const now = Date.now();
 		const new_item = new Ull.TimeStampItem(now);
 		items.push(new_item);
@@ -105,8 +105,8 @@ function addMetadata(items: Ull.Item[], settings: Settings.SettingStore): Ull.It
 
 	const types = items.map(item => item.type);
 	if (!(contains(types, Ull.TripCodeItem.type_name))) {
-		if (settings.prependDefaultTripcode) {
-			const id = settings.defaultTripcode;
+		if (settings.prependDefaultTripcode.value) {
+			const id = settings.defaultTripcode.value;
 			items.unshift(new Ull.TripCodeItem(id));
 		}
 	}
@@ -181,7 +181,7 @@ async function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, m
 		const hash: Ipfs.CID = createCidFromForeignCid(item.data);
 		const hashString = hash.toString();
 
-		const link = newLink(hashString, messageHash, map, settings.previewMessageOnLinkHover);
+		const link = newLink(hashString, messageHash, map, settings.previewMessageOnLinkHover.value);
 		return link;
 	} else if (gitem.type === Ull.CodeItem.type_name) {
 		const item: Ull.CodeItem = gitem;
@@ -219,7 +219,7 @@ async function itemToTag(gitem: Ull.Item, node: IpfsNode, messageHash: string, m
 		const item: Ull.TimeStampItem = gitem;
 		const div = document.createElement("div");
 		div.classList.add("low_profile");
-		if (settings.relativeTimeStamp) {
+		if (settings.relativeTimeStamp.value) {
 			const now = new Date().getTime();
 			const difference = now - item.data;
 			div.innerText = relativeTimeDifference(difference);
@@ -491,7 +491,7 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 		try {
 			try{await ipfs.swarm.connect(remotePeerAddress);}catch (err){}
 			const smallerContainer = document.createElement("div");
-			if (settings.compactView)
+			if (settings.compactView.value)
 				smallerContainer.classList.add("medium_container");
 			container.appendChild(smallerContainer);
 			messageView.update(ipfs, topHash, smallerContainer);
@@ -512,7 +512,7 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 	try {
 		const allTheDivs = allTheHashes.map((hash) => {
 			const div = document.createElement("div");
-			if (settings.compactView)
+			if (settings.compactView.value)
 				div.classList.add("medium_container");
 			messageView.update(ipfs, hash, div);
 			return div;

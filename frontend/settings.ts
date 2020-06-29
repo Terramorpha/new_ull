@@ -1,4 +1,11 @@
 module Settings {
+
+	export interface SettingItem {
+		value: any;
+		description: string;
+		toDomElement(): HTMLElement;
+	}
+	
 	function getCookie(cname) {
 		const name = cname + "=";
 		const decodedCookie = decodeURIComponent(document.cookie);
@@ -36,32 +43,67 @@ module Settings {
 		return new_id;
 	}
 
+	class BoolSetting implements SettingItem {
+		value: boolean;
+		description: string;
+		toDomElement(): HTMLElement {
+			const checkbox = document.createElement("input");
+			checkbox.checked = this.value;
+			checkbox.type = "checkbox";
+			checkbox.addEventListener("click", () => {
+				this.value = checkbox.checked;
+			});
+			return checkbox
+		}
+		constructor(description: string, val: boolean) {
+			this.description = description;
+			this.value = val;
+		}
+	}
+
+	class StringSetting implements SettingItem {
+		value: string;
+		description: string;
+		toDomElement():HTMLElement {
+			const textbox = document.createElement("input");
+			textbox.value = this.value;
+			textbox.addEventListener("keyup", () => {
+				this.value = textbox.value;
+			});
+			return textbox;
+		}
+		constructor(desc: string, value: string) {
+			this.description = desc;
+			this.value = value;
+		}
+	}
+	
 	export class SettingStore {
-		prependDefaultTripcode: boolean;
-		defaultTripcode: string;
-		previewMessageOnLinkHover: boolean;
-		relativeTimeStamp: boolean;
-		compactView: boolean;
-		appendTimeStamp: boolean;
-		enableImageOverlay: boolean;
+		prependDefaultTripcode: BoolSetting;
+		defaultTripcode: StringSetting;
+		previewMessageOnLinkHover: BoolSetting;
+		relativeTimeStamp: BoolSetting;
+		compactView: BoolSetting;
+		appendTimeStamp: BoolSetting;
+		enableImageOverlay: BoolSetting;
 		constructor() {
-			this.prependDefaultTripcode = true;
-			this.previewMessageOnLinkHover = true;
-			this.defaultTripcode = generateID();
-			this.relativeTimeStamp = true;
-			this.compactView = false;
-			this.appendTimeStamp = true;
-			this.enableImageOverlay = true;
+			this.prependDefaultTripcode = new BoolSetting("When clicking 'Post', add the default tripcode to the beginning of the post.", true);
+			this.previewMessageOnLinkHover = new BoolSetting("When hovering links and backlinks with the mouse, display the message that is getting pointed to.", true);
+			this.defaultTripcode = new StringSetting("When automatically prepending a tripcode, use this one.", generateID());
+			this.relativeTimeStamp = new BoolSetting("Display the timestamps of the posts (if any) relatively to the current date & time.", true);
+			this.compactView = new BoolSetting("Display the messages in a more compact fashion. Uses the empty horizontal space.", false);
+			this.appendTimeStamp = new BoolSetting("When posting a message, append a timestamp.", true);
+			this.enableImageOverlay = new BoolSetting("When clicking on an image, use an overlay to view the image instead of maximizing the image to it's original size.", true);
 		}
 	}
 
 	function fixSettingStore(s:SettingStore) {
-		const comparedTo = new SettingStore();
+		const out = new SettingStore();
 
-		for (const key in comparedTo) {
-			if (s[key] === undefined)
-				s[key] = comparedTo[key];
+		for (const key in s) {
+			if (out[key]) out[key].value = s[key]
 		}
+		return out;
 	}
 
 	export function getSettingStore(): SettingStore {
@@ -73,11 +115,14 @@ module Settings {
 		}
 		const json = atob(base64encoded);
 		const struct = JSON.parse(json);
-		fixSettingStore(struct);
-		return struct;
+		return fixSettingStore(struct);
 	}
 
 	export function setSettingStore(s: SettingStore) {
+		const settings = s as any;
+		for (const key in settings) {
+			settings[key] = settings[key].value;
+		}
 		const json = JSON.stringify(s);
 		const base64 = btoa(json);
 		setCookie("settings", base64, 365);
