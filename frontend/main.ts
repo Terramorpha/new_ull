@@ -419,17 +419,18 @@ async function getIpfsNode(settings: Settings.SettingStore): Promise<IpfsNode> {
 		previewElem = big
 	}
 	const buttonInnerHTML = preview.innerHTML;
+	const event = "input";
 	preview.addEventListener("click", async () => {
 		if (previewOn) {
 			preview.innerHTML = buttonInnerHTML;
 			previewElem.remove()
 			previewElem = null;
-			post.text.removeEventListener("keyup", update);
+			post.text.removeEventListener(event, update);
 			previewOn = false;
 		}else{
 			preview.innerHTML = "Preview On"
 			await update()
-			post.text.addEventListener("keyup", update);
+			post.text.addEventListener(event, update);
 			previewOn = true;
 		}
 	})
